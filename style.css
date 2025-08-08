@@ -1,0 +1,9 @@
+body { background:#fafafa; font-family: "Roboto", sans-serif; }
+.brand-logo { font-weight:600; }
+.card { border-radius:8px; }
+#posts-list .card { margin-bottom:1rem; }
+.like-btn { cursor:pointer; }
+.post-meta { font-size:0.9rem; color:#666; }
+.collection .collection-item .secondary-content { right: 16px; }
+.dark-theme { background:#121212; color:#f1f1f1; }
+.dark-theme .card { background:#1e1e1e; color:#f1f1f1; }
