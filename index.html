@@ -15,7 +15,7 @@
   }
   button { background:#2196F3; color:white; border:none; cursor:pointer; }
   nav { position:fixed; bottom:0; left:0; right:0; background:white; display:flex; justify-content:space-around; border-top:1px solid #ccc; padding:10px 0; }
-  nav button { background:none; color:#555; border:none; font-size:24px; cursor:pointer; }
+  nav button { background:none; color:#555; border:none; cursor:pointer; font-size:24px; }
   nav button.active { color:#2196F3; font-weight:bold; }
 </style>
 </head>
@@ -57,12 +57,13 @@ function getCurrentUid() {
   return auth.currentUser ? auth.currentUser.uid : null;
 }
 
+// ----- LOGIN & REGISTER -----
 function renderLogin() {
   document.getElementById('app').innerHTML = `
     <div class="container card">
       <h3>Login to Xinn Social</h3>
-      <input type="email" id="email" placeholder="Email (@xinn.lab only)" />
-      <input type="password" id="password" placeholder="Password" />
+      <input type="email" id="email" placeholder="Email (@xinn.lab only)">
+      <input type="password" id="password" placeholder="Password">
       <button onclick="login()">Login</button>
       <p>Or <a href="#" onclick="renderRegister()">Register</a></p>
     </div>`;
@@ -72,11 +73,11 @@ function renderRegister() {
   document.getElementById('app').innerHTML = `
     <div class="container card">
       <h3>Create Account</h3>
-      <input type="text" id="name" placeholder="Full Name" />
-      <input type="number" id="age" placeholder="Age" />
+      <input type="text" id="name" placeholder="Full Name">
+      <input type="number" id="age" placeholder="Age">
       <textarea id="bio" placeholder="Bio"></textarea>
-      <input type="email" id="email" placeholder="Email (@xinn.lab only)" />
-      <input type="password" id="password" placeholder="Password" />
+      <input type="email" id="email" placeholder="Email (@xinn.lab only)">
+      <input type="password" id="password" placeholder="Password">
       <button onclick="register()">Register</button>
       <p>Already have an account? <a href="#" onclick="renderLogin()">Login</a></p>
     </div>`;
@@ -89,8 +90,7 @@ function login() {
     alert('Email must end with @xinn.lab');
     return;
   }
-  auth.signInWithEmailAndPassword(email, pass)
-    .catch(e => alert(e.message));
+  auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
 }
 
 function register() {
@@ -99,26 +99,18 @@ function register() {
   const bio = document.getElementById('bio').value.trim();
   const email = document.getElementById('email').value.trim();
   const pass = document.getElementById('password').value.trim();
-
   if (!email.endsWith('@xinn.lab')) {
     alert('Email must end with @xinn.lab');
     return;
   }
   auth.createUserWithEmailAndPassword(email, pass)
     .then(cred => {
-      return db.collection('users').doc(cred.user.uid).set({
-        name,
-        age,
-        bio,
-        email,
-        friends: [],
-        friendRequestsReceived: [],
-        friendRequestsSent: []
-      });
+      return db.collection('users').doc(cred.user.uid).set({ name, age, bio, email, friends: [], friendRequestsSent: [], friendRequestsReceived: [] });
     })
     .catch(e => alert(e.message));
 }
 
+// ----- FEED -----
 function renderFeed() {
   document.getElementById('app').innerHTML = `
     <div class="container">
@@ -136,11 +128,12 @@ function createPost() {
   if (!content) return;
   db.collection('posts').add({
     content,
-    uid: getCurrentUid(),
+    uid: auth.currentUser.uid,
     likes: [],
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  document.getElementById('postContent').value = '';
+  }).then(() => {
+    document.getElementById('postContent').value = '';
+  }).catch(e => alert(e.message));
 }
 
 function loadPosts() {
@@ -160,12 +153,12 @@ function loadPosts() {
               <div style="display:flex;align-items:center;margin-bottom:8px;">
                 <span class="material-icons" style="font-size:36px;color:#2196F3;margin-right:10px;">account_circle</span>
                 <div>
-                  <strong>${user.name}</strong><br />
+                  <strong>${user.name}</strong><br>
                   <small style="color:gray;">${time}</small>
                 </div>
               </div>
-              <div style="margin:10px 0;font-size:15px;">${p.content}</div>
-              <hr style="margin:8px 0;" />
+              <div style="margin:10px 0;font-size:15px;">${escapeHtml(p.content)}</div>
+              <hr style="margin:8px 0;">
               <button onclick="toggleLike('${doc.id}')" style="background:none;color:#2196F3;border:none;cursor:pointer;">
                 👍 Like (${p.likes.length})
               </button>
@@ -181,32 +174,29 @@ function loadPosts() {
 }
 
 function toggleLike(postId) {
-  const uid = getCurrentUid();
-  if (!uid) return;
   const ref = db.collection('posts').doc(postId);
   ref.get().then(doc => {
     const data = doc.data();
     let likes = data.likes || [];
-    if (likes.includes(uid)) {
-      likes = likes.filter(id => id !== uid);
+    if (likes.includes(auth.currentUser.uid)) {
+      likes = likes.filter(id => id !== auth.currentUser.uid);
     } else {
-      likes.push(uid);
+      likes.push(auth.currentUser.uid);
     }
     ref.update({ likes });
   });
 }
 
+// ----- PROFILE -----
 function renderProfile() {
-  const uid = getCurrentUid();
-  if (!uid) return;
-  db.collection('users').doc(uid).get().then(doc => {
+  db.collection('users').doc(auth.currentUser.uid).get().then(doc => {
     const u = doc.data();
     document.getElementById('app').innerHTML = `
       <div class="container">
         <div class="card">
-          <h3>${u.name}</h3>
-          <p>Age: ${u.age}</p>
-          <p>Bio: ${u.bio}</p>
+          <h3>${escapeHtml(u.name)}</h3>
+          <p>Age: ${escapeHtml(u.age)}</p>
+          <p>Bio: ${escapeHtml(u.bio)}</p>
           <button onclick="editProfile()">Edit Profile</button>
         </div>
       </div>`;
@@ -214,35 +204,28 @@ function renderProfile() {
 }
 
 function editProfile() {
-  const uid = getCurrentUid();
-  if (!uid) return;
-  db.collection('users').doc(uid).get().then(doc => {
+  db.collection('users').doc(auth.currentUser.uid).get().then(doc => {
     const u = doc.data();
     document.getElementById('app').innerHTML = `
       <div class="container card">
-        <input id="name" value="${u.name}" />
-        <input id="age" value="${u.age}" />
-        <textarea id="bio">${u.bio}</textarea>
+        <input id="name" value="${escapeHtml(u.name)}" placeholder="Full Name">
+        <input id="age" value="${escapeHtml(u.age)}" placeholder="Age">
+        <textarea id="bio" placeholder="Bio">${escapeHtml(u.bio)}</textarea>
         <button onclick="saveProfile()">Save</button>
       </div>`;
   });
 }
 
 function saveProfile() {
-  const uid = getCurrentUid();
-  if (!uid) return;
   const name = document.getElementById('name').value.trim();
   const age = document.getElementById('age').value.trim();
   const bio = document.getElementById('bio').value.trim();
-  db.collection('users').doc(uid).update({ name, age, bio }).then(() => {
+  db.collection('users').doc(auth.currentUser.uid).update({ name, age, bio }).then(() => {
     renderProfile();
-  });
+  }).catch(e => alert(e.message));
 }
 
-// ===================
-// FRIEND SYSTEM
-// ===================
-
+// ----- FRIENDS -----
 async function renderFriends() {
   const uid = getCurrentUid();
   if (!uid) return;
@@ -278,16 +261,13 @@ async function renderFriends() {
     const friendRequestsReceived = userData.friendRequestsReceived || [];
     const friendRequestsSent = userData.friendRequestsSent || [];
 
-    // Load all users except current
     const usersSnap = await db.collection('users').get();
     const allUsers = [];
     usersSnap.forEach(doc => {
-      if (doc.id !== uid) {
-        allUsers.push({ id: doc.id, ...doc.data() });
-      }
+      if (doc.id !== uid) allUsers.push({ id: doc.id, ...doc.data() });
     });
 
-    // Render friend requests (incoming)
+    // Friend Requests (incoming)
     const requestsContainer = document.getElementById('requestsContainer');
     if (friendRequestsReceived.length === 0) {
       requestsContainer.innerHTML = `<p>No friend requests.</p>`;
@@ -297,7 +277,7 @@ async function renderFriends() {
         const user = userDoc.data() || { name: "Unknown" };
         return `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
-            <span>${user.name} (${user.email})</span>
+            <span>${escapeHtml(user.name)} (${escapeHtml(user.email)})</span>
             <div>
               <button style="background:#4CAF50;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;margin-right:5px;"
                 onclick="acceptFriend('${requesterUid}')">Accept</button>
@@ -309,7 +289,7 @@ async function renderFriends() {
       requestsContainer.innerHTML = requestsHTML.join('');
     }
 
-    // Render sent friend requests with cancel option
+    // Sent friend requests with cancel
     const sentRequestsContainer = document.getElementById('sentRequestsContainer');
     if (friendRequestsSent.length === 0) {
       sentRequestsContainer.innerHTML = `<p>No sent friend requests.</p>`;
@@ -319,7 +299,7 @@ async function renderFriends() {
         const user = userDoc.data() || { name: "Unknown" };
         return `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
-            <span>${user.name} (${user.email})</span>
+            <span>${escapeHtml(user.name)} (${escapeHtml(user.email)})</span>
             <button style="background:#f44336;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;"
               onclick="cancelFriendRequest('${toUid}')">Cancel Request</button>
           </div>`;
@@ -335,14 +315,14 @@ async function renderFriends() {
     } else {
       friendsContainer.innerHTML = friendUsers.map(u => `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
-          <span>${u.name} (${u.email})</span>
+          <span>${escapeHtml(u.name)} (${escapeHtml(u.email)})</span>
           <button style="background:#f44336;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;"
             onclick="removeFriend('${u.id}')">Remove</button>
         </div>
       `).join('');
     }
 
-    // Non-friends excluding sent and received requests
+    // Non-friends excluding requests
     const nonFriendUsers = allUsers.filter(u =>
       !friends.includes(u.id) &&
       !friendRequestsSent.includes(u.id) &&
@@ -355,7 +335,7 @@ async function renderFriends() {
     } else {
       usersContainer.innerHTML = nonFriendUsers.map(u => `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
-          <span>${u.name} (${u.email})</span>
+          <span>${escapeHtml(u.name)} (${escapeHtml(u.email)})</span>
           <button style="background:#2196F3;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;"
             onclick="sendFriendRequest('${u.id}')">Add Friend</button>
         </div>
@@ -363,7 +343,43 @@ async function renderFriends() {
     }
 
   } catch (err) {
-    document.getElementById('app').innerHTML = `<p>Error loading friends: ${err.message}</p>`;
+    document.getElementById('app').innerHTML = `<p>Error loading friends: ${escapeHtml(err.message)}</p>`;
+  }
+}
+
+async function sendFriendRequest(toUid) {
+  const uid = getCurrentUid();
+  if (!uid) return;
+  if (uid === toUid) return alert("Can't send friend request to yourself.");
+
+  const userRef = db.collection('users').doc(uid);
+  const toUserRef = db.collection('users').doc(toUid);
+
+  try {
+    const [userDoc, toUserDoc] = await Promise.all([userRef.get(), toUserRef.get()]);
+    const userData = userDoc.data() || {};
+    const toUserData = toUserDoc.data() || {};
+
+    // Check already friends
+    if ((userData.friends || []).includes(toUid)) return alert('Already friends.');
+    // Check if already sent
+    if ((userData.friendRequestsSent || []).includes(toUid)) return alert('Friend request already sent.');
+    // Check if received a request from them - just accept instead
+    if ((userData.friendRequestsReceived || []).includes(toUid)) return alert('User has sent you a friend request. Please accept it.');
+
+    // Update current user's sent requests
+    await userRef.update({
+      friendRequestsSent: firebase.firestore.FieldValue.arrayUnion(toUid)
+    });
+    // Update other user's received requests
+    await toUserRef.update({
+      friendRequestsReceived: firebase.firestore.FieldValue.arrayUnion(uid)
+    });
+
+    alert('Friend request sent!');
+    renderFriends();
+  } catch (err) {
+    alert('Error sending friend request: ' + err.message);
   }
 }
 
@@ -375,11 +391,9 @@ async function cancelFriendRequest(toUid) {
   const toUserRef = db.collection('users').doc(toUid);
 
   try {
-    // Remove toUid from current user's sent requests
     await userRef.update({
       friendRequestsSent: firebase.firestore.FieldValue.arrayRemove(toUid)
     });
-    // Remove uid from toUid's received requests
     await toUserRef.update({
       friendRequestsReceived: firebase.firestore.FieldValue.arrayRemove(uid)
     });
@@ -390,15 +404,210 @@ async function cancelFriendRequest(toUid) {
   }
 }
 
-// ===================
-// Dummy chat page placeholder
-function renderChat() {
-  document.getElementById('app').innerHTML = `
-    <div class="container card">
-      <p>Chat feature coming soon...</p>
-    </div>`;
+async function acceptFriend(requesterUid) {
+  const uid = getCurrentUid();
+  if (!uid) return;
+
+  const userRef = db.collection('users').doc(uid);
+  const requesterRef = db.collection('users').doc(requesterUid);
+
+  try {
+    // Remove from received and sent requests
+    await userRef.update({
+      friendRequestsReceived: firebase.firestore.FieldValue.arrayRemove(requesterUid),
+      friends: firebase.firestore.FieldValue.arrayUnion(requesterUid)
+    });
+    await requesterRef.update({
+      friendRequestsSent: firebase.firestore.FieldValue.arrayRemove(uid),
+      friends: firebase.firestore.FieldValue.arrayUnion(uid)
+    });
+    alert('Friend request accepted!');
+    renderFriends();
+  } catch (err) {
+    alert('Error accepting friend request: ' + err.message);
+  }
 }
 
+async function declineFriend(requesterUid) {
+  const uid = getCurrentUid();
+  if (!uid) return;
+
+  const userRef = db.collection('users').doc(uid);
+  const requesterRef = db.collection('users').doc(requesterUid);
+
+  try {
+    await userRef.update({
+      friendRequestsReceived: firebase.firestore.FieldValue.arrayRemove(requesterUid)
+    });
+    await requesterRef.update({
+      friendRequestsSent: firebase.firestore.FieldValue.arrayRemove(uid)
+    });
+    alert('Friend request declined.');
+    renderFriends();
+  } catch (err) {
+    alert('Error declining friend request: ' + err.message);
+  }
+}
+
+async function removeFriend(friendUid) {
+  const uid = getCurrentUid();
+  if (!uid) return;
+
+  const userRef = db.collection('users').doc(uid);
+  const friendRef = db.collection('users').doc(friendUid);
+
+  if (!confirm("Are you sure you want to remove this friend?")) return;
+
+  try {
+    await userRef.update({
+      friends: firebase.firestore.FieldValue.arrayRemove(friendUid)
+    });
+    await friendRef.update({
+      friends: firebase.firestore.FieldValue.arrayRemove(uid)
+    });
+    alert('Friend removed.');
+    renderFriends();
+  } catch (err) {
+    alert('Error removing friend: ' + err.message);
+  }
+}
+
+// ----- CHAT -----
+let currentChatFriendUid = null;
+let unsubscribeChat = null;
+
+function getChatId(uid1, uid2) {
+  return [uid1, uid2].sort().join('_');
+}
+
+async function renderChat() {
+  const uid = getCurrentUid();
+  if (!uid) return;
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="container" style="display:flex;flex-direction:row; height:80vh;">
+      <div id="friendsList" style="width:30%; border-right:1px solid #ccc; overflow-y:auto;">
+        <h3>Your Friends</h3>
+        <div id="chatFriendsContainer" style="padding:10px;">Loading friends...</div>
+      </div>
+      <div id="chatWindow" style="width:70%; display:flex; flex-direction:column; justify-content:space-between;">
+        <div id="chatMessages" style="flex-grow:1; overflow-y:auto; padding:10px; border-bottom:1px solid #ccc;"></div>
+        <div style="padding:10px;">
+          <textarea id="chatInput" style="width:100%; height:60px; resize:none;" placeholder="Select a friend to start chatting" disabled></textarea>
+          <button id="sendChatBtn" disabled style="margin-top:5px; width:100%;">Send</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  try {
+    const userDoc = await db.collection('users').doc(uid).get();
+    const userData = userDoc.data() || {};
+    const friends = userData.friends || [];
+
+    if (friends.length === 0) {
+      document.getElementById('chatFriendsContainer').innerHTML = '<p>You have no friends to chat with.</p>';
+      return;
+    }
+
+    const friendsInfoPromises = friends.map(fid => db.collection('users').doc(fid).get());
+    const friendsDocs = await Promise.all(friendsInfoPromises);
+
+    const friendsHTML = friendsDocs.map(doc => {
+      const u = doc.data();
+      return `
+        <div style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;" onclick="selectChatFriend('${doc.id}', '${escapeHtml(u.name)}')">
+          <strong>${escapeHtml(u.name)}</strong><br><small>${escapeHtml(u.email)}</small>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('chatFriendsContainer').innerHTML = friendsHTML;
+
+  } catch (err) {
+    document.getElementById('chatFriendsContainer').innerHTML = `<p>Error loading friends: ${escapeHtml(err.message)}</p>`;
+  }
+
+  // Disable chat input initially
+  document.getElementById('chatInput').disabled = true;
+  document.getElementById('sendChatBtn').disabled = true;
+
+  // Add send button event
+  document.getElementById('sendChatBtn').onclick = sendMessage;
+}
+
+async function selectChatFriend(friendUid, friendName) {
+  const uid = getCurrentUid();
+  if (!uid) return;
+
+  currentChatFriendUid = friendUid;
+
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendChatBtn');
+  chatInput.disabled = false;
+  chatInput.placeholder = `Message to ${friendName}...`;
+  sendBtn.disabled = false;
+  chatInput.value = '';
+
+  const chatMessages = document.getElementById('chatMessages');
+  chatMessages.innerHTML = '<p>Loading messages...</p>';
+
+  if (unsubscribeChat) unsubscribeChat();
+
+  const chatId = getChatId(uid, friendUid);
+
+  unsubscribeChat = db.collection('chats').doc(chatId).collection('messages')
+    .orderBy('timestamp', 'asc')
+    .onSnapshot(snapshot => {
+      if (snapshot.empty) {
+        chatMessages.innerHTML = '<p>No messages yet.</p>';
+        return;
+      }
+      let messagesHtml = '';
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const sender = msg.senderUid === uid ? 'You' : friendName;
+        const alignRight = msg.senderUid === uid ? 'right' : 'left';
+        messagesHtml += `
+          <div style="text-align:${alignRight}; margin-bottom:8px;">
+            <div style="display:inline-block; background:${msg.senderUid === uid ? '#2196F3' : '#eee'}; color:${msg.senderUid === uid ? 'white' : 'black'}; padding:8px 12px; border-radius:15px; max-width:70%;">
+              <small>${sender}</small><br/>
+              ${escapeHtml(msg.text)}
+              <div style="font-size:10px; margin-top:4px; color:gray;">
+                ${msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString() : ''}
+              </div>
+            </div>
+          </div>`;
+      });
+      chatMessages.innerHTML = messagesHtml;
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+}
+
+async function sendMessage() {
+  const uid = getCurrentUid();
+  if (!uid || !currentChatFriendUid) return;
+
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const chatId = getChatId(uid, currentChatFriendUid);
+
+  try {
+    await db.collection('chats').doc(chatId).collection('messages').add({
+      senderUid: uid,
+      text,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    input.value = '';
+  } catch (err) {
+    alert('Error sending message: ' + err.message);
+  }
+}
+
+// ----- SETTINGS -----
 function renderSettings() {
   document.getElementById('app').innerHTML = `
     <div class="container card">
@@ -406,24 +615,34 @@ function renderSettings() {
     </div>`;
 }
 
+// ----- PAGE NAVIGATION -----
 function showPage(page) {
-  // Highlight active nav button
-  [...document.querySelectorAll('nav button')].forEach(btn => btn.classList.remove('active'));
-  const btnMap = {feed:0, friends:1, chat:2, profile:3, settings:4};
-  if (btnMap.hasOwnProperty(page)) {
-    document.querySelectorAll('nav button')[btnMap[page]].classList.add('active');
-  }
+  clearActiveNav();
+  const buttons = document.querySelectorAll('nav button');
+  buttons.forEach(btn => {
+    if (btn.getAttribute('onclick').includes(page)) btn.classList.add('active');
+  });
 
-  switch(page) {
-    case 'feed': renderFeed(); break;
-    case 'friends': renderFriends(); break;
-    case 'chat': renderChat(); break;
-    case 'profile': renderProfile(); break;
-    case 'settings': renderSettings(); break;
-    default: renderFeed();
-  }
+  if (page === 'feed') renderFeed();
+  else if (page === 'profile') renderProfile();
+  else if (page === 'friends') renderFriends();
+  else if (page === 'chat') renderChat();
+  else if (page === 'settings') renderSettings();
 }
 
+function clearActiveNav() {
+  const buttons = document.querySelectorAll('nav button');
+  buttons.forEach(btn => btn.classList.remove('active'));
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return text.replace(/[&<>"']/g, function(m) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+  });
+}
+
+// ----- AUTH STATE LISTENER -----
 auth.onAuthStateChanged(user => {
   if (user) {
     showPage('feed');
@@ -434,6 +653,5 @@ auth.onAuthStateChanged(user => {
   }
 });
 </script>
-
 </body>
 </html>
