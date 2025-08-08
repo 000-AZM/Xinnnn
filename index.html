@@ -1,122 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>XinnLab Social</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-<style>
+  <meta charset="UTF-8">
+  <title>XinnLab Social</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Fonts & Material Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
     body {
-        margin: 0;
-        font-family: 'Roboto', sans-serif;
-        background: #f0f2f5;
+      font-family: 'Roboto', sans-serif;
+      background: #f0f2f5;
+      margin: 0;
     }
     header {
-        background: #1976d2;
-        color: white;
-        padding: 12px;
-        font-size: 20px;
-        font-weight: bold;
-        text-align: center;
+      background: #2196f3;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .container {
-        max-width: 600px;
-        margin: auto;
-        padding: 10px;
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+    .btn {
+      background: #2196f3;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
     }
     .card {
-        background: white;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 10px auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      width: 95%;
+      max-width: 500px;
     }
-    .post-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    .card-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
     }
-    .post-name {
-        font-weight: bold;
-        color: #1976d2;
+    .card-header .name {
+      font-weight: 500;
     }
-    .post-time {
-        font-size: 12px;
-        color: #777;
+    .card-header .time {
+      font-size: 12px;
+      color: gray;
+      margin-left: auto;
     }
-    .post-text {
-        margin-top: 8px;
-        font-size: 15px;
+    #login-page, #feed-page, #profile-page, #settings-page {
+      display: none;
     }
-    .input-card {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 15px;
+    #post-form textarea {
+      width: 100%;
+      resize: none;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      margin-bottom: 8px;
     }
-    textarea {
-        resize: none;
-        padding: 8px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        font-size: 14px;
-    }
-    button {
-        margin-top: 5px;
-        padding: 8px;
-        background: #1976d2;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-    button:hover {
-        background: #135ca1;
-    }
-    /* Login Screen */
-    #login-page {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        background: #f0f2f5;
-    }
-    #login-page input {
-        margin: 5px;
-        padding: 8px;
-        font-size: 14px;
-        width: 250px;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-    }
-</style>
+  </style>
 </head>
 <body>
 
-<div id="login-page">
-    <h2>Login to XinnLab Social</h2>
-    <input type="email" id="email" placeholder="Email (@xinn.lab)">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-    <button onclick="register()">Register</button>
+<header>
+  <h1>XinnLab Social</h1>
+  <button id="logout-btn" class="btn" style="display:none;">Logout</button>
+</header>
+
+<!-- Login Page -->
+<div id="login-page" style="padding:20px;">
+  <h2>Login / Register</h2>
+  <input id="email" type="text" placeholder="Username (no @xinn.lab)" style="width:100%;padding:8px;margin:5px 0;">
+  <input id="password" type="password" placeholder="Password" style="width:100%;padding:8px;margin:5px 0;">
+  <button id="login-btn" class="btn">Login</button>
+  <button id="register-btn" class="btn">Register</button>
 </div>
 
-<div id="main-page" style="display:none;">
-    <header>XinnLab Social</header>
-    <div class="container">
-        <div class="input-card">
-            <textarea id="postText" placeholder="What's on your mind?"></textarea>
-            <button onclick="createPost()">Post</button>
-        </div>
-        <div id="feed"></div>
-    </div>
+<!-- Feed Page -->
+<div id="feed-page">
+  <div style="padding:10px;">
+    <form id="post-form">
+      <textarea id="post-content" rows="3" placeholder="What's on your mind?"></textarea>
+      <button type="submit" class="btn">Post</button>
+    </form>
+  </div>
+  <div id="posts"></div>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-const firebaseConfig = {
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+<script>
+ const firebaseConfig = {
   apiKey: "AIzaSyCGN7t5FjDeJ-ewm7S_9z0VJrRSggTaJ2Q",
   authDomain: "coin-base-by-hector.firebaseapp.com",
   databaseURL: "https://coin-base-by-hector-default-rtdb.firebaseio.com",
@@ -128,75 +112,84 @@ const firebaseConfig = {
 };
 
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  const app = firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-    const loginPage = document.getElementById('login-page');
-    const mainPage = document.getElementById('main-page');
-    const feed = document.getElementById('feed');
+  const loginPage = document.getElementById('login-page');
+  const feedPage = document.getElementById('feed-page');
+  const logoutBtn = document.getElementById('logout-btn');
+  const postsDiv = document.getElementById('posts');
 
-    function login(){
-        let email = document.getElementById('email').value;
-        let password = document.getElementById('password').value;
-        signInWithEmailAndPassword(auth, email, password)
-        .catch(err => alert(err.message));
+  // Auth State
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      loginPage.style.display = 'none';
+      feedPage.style.display = 'block';
+      logoutBtn.style.display = 'inline-block';
+      loadPosts();
+    } else {
+      loginPage.style.display = 'block';
+      feedPage.style.display = 'none';
+      logoutBtn.style.display = 'none';
     }
+  });
 
-    function register(){
-        let email = document.getElementById('email').value;
-        if(!email.endsWith("@xinn.lab")){
-            alert("Email must end with @xinn.lab");
-            return;
-        }
-        let password = document.getElementById('password').value;
-        createUserWithEmailAndPassword(auth, email, password)
-        .catch(err => alert(err.message));
-    }
+  // Login
+  document.getElementById('login-btn').onclick = () => {
+    const email = document.getElementById('email').value.trim() + '@xinn.lab';
+    const password = document.getElementById('password').value;
+    auth.signInWithEmailAndPassword(email, password)
+      .catch(err => alert(err.message));
+  };
 
-    onAuthStateChanged(auth, user => {
-        if(user){
-            loginPage.style.display = "none";
-            mainPage.style.display = "block";
-            loadPosts();
-        } else {
-            loginPage.style.display = "flex";
-            mainPage.style.display = "none";
-        }
+  // Register
+  document.getElementById('register-btn').onclick = () => {
+    const email = document.getElementById('email').value.trim() + '@xinn.lab';
+    const password = document.getElementById('password').value;
+    auth.createUserWithEmailAndPassword(email, password)
+      .catch(err => alert(err.message));
+  };
+
+  // Logout
+  logoutBtn.onclick = () => auth.signOut();
+
+  // Post submit
+  document.getElementById('post-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const content = document.getElementById('post-content').value.trim();
+    if (!content) return;
+    const user = auth.currentUser;
+    db.collection('posts').add({
+      uid: user.uid,
+      name: user.email.split('@')[0],
+      content: content,
+      time: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      document.getElementById('post-content').value = '';
     });
+  });
 
-    async function createPost(){
-        let postText = document.getElementById('postText').value.trim();
-        if(postText === "") return;
-        await addDoc(collection(db, "posts"), {
-            text: postText,
-            uid: auth.currentUser.uid,
-            email: auth.currentUser.email,
-            time: serverTimestamp()
-        });
-        document.getElementById('postText').value = "";
-    }
-
-    function loadPosts(){
-        const q = query(collection(db, "posts"), orderBy("time", "desc"));
-        onSnapshot(q, snapshot => {
-            feed.innerHTML = "";
-            snapshot.forEach(doc => {
-                let data = doc.data();
-                let timeStr = data.time?.toDate ? data.time.toDate().toLocaleString() : "";
-                feed.innerHTML += `
-                    <div class="card">
-                        <div class="post-header">
-                            <span class="post-name">${data.email.split("@")[0]}</span>
-                            <span class="post-time">${timeStr}</span>
-                        </div>
-                        <div class="post-text">${data.text}</div>
-                    </div>
-                `;
-            });
-        });
-    }
+  // Load posts
+  function loadPosts() {
+    db.collection('posts').orderBy('time', 'desc').onSnapshot(snapshot => {
+      postsDiv.innerHTML = '';
+      snapshot.forEach(doc => {
+        const post = doc.data();
+        const timeStr = post.time?.toDate().toLocaleString() || 'Just now';
+        const card = `
+          <div class="card">
+            <div class="card-header">
+              <div class="name">${post.name}</div>
+              <div class="time">${timeStr}</div>
+            </div>
+            <div class="card-content">${post.content}</div>
+          </div>
+        `;
+        postsDiv.innerHTML += card;
+      });
+    });
+  }
 </script>
-
 </body>
 </html>
