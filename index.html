@@ -599,48 +599,59 @@ function removeFriend(friendUid) {
     friendRef.set({ friends }, { merge: true });
   });
 }
-
 function loadFriendRequests() {
   const uid = getCurrentUid();
   if (!uid) return;
-  
+
+  // Use onSnapshot to listen real-time to friend requests sent TO current user
   db.collection('friendRequests')
     .where('to', '==', uid)
     .where('status', '==', 'pending')
     .orderBy('timestamp', 'desc')
     .onSnapshot(snapshot => {
+      if (!document.getElementById('friendRequests')) return;
       let html = '';
+
       if (snapshot.empty) {
         html = '<p>No pending friend requests.</p>';
         document.getElementById('friendRequests').innerHTML = html;
         return;
       }
 
+      // Create array of promises to fetch sender names
+      const promises = [];
+
       snapshot.forEach(doc => {
         const req = doc.data();
         const requestId = doc.id;
-        html += `
-          <div style="padding:6px; border-bottom:1px solid #ccc; display:flex; justify-content:space-between; align-items:center;">
-            <span><strong>Request from:</strong> <span id="reqUserName_${requestId}">Loading...</span></span>
-            <div>
-              <button onclick="acceptFriendRequest('${requestId}', '${req.from}')">Accept</button>
-              <button onclick="declineFriendRequest('${requestId}')">Decline</button>
-            </div>
-          </div>
-        `;
 
-        db.collection('users').doc(req.from).get().then(userDoc => {
-          if (userDoc.exists) {
-            const nameSpan = document.getElementById('reqUserName_' + requestId);
-            if (nameSpan) {
-              nameSpan.textContent = userDoc.data().name;
-            }
-          }
+        // For each request, create a promise to get sender's name
+        const p = db.collection('users').doc(req.from).get().then(userDoc => {
+          const senderName = userDoc.exists ? userDoc.data().name : "Unknown";
+
+          // Append this friend request HTML
+          html += `
+            <div style="padding:6px; border-bottom:1px solid #ccc; display:flex; justify-content:space-between; align-items:center;">
+              <span><strong>Request from:</strong> ${escapeHtml(senderName)}</span>
+              <div>
+                <button onclick="acceptFriendRequest('${requestId}', '${req.from}')">Accept</button>
+                <button onclick="declineFriendRequest('${requestId}')">Decline</button>
+              </div>
+            </div>`;
         });
+
+        promises.push(p);
       });
-      document.getElementById('friendRequests').innerHTML = html;
+
+      // After all sender names fetched, update UI at once
+      Promise.all(promises).then(() => {
+        if (document.getElementById('friendRequests')) {
+          document.getElementById('friendRequests').innerHTML = html;
+        }
+      });
     });
 }
+
 
 function acceptFriendRequest(requestId, fromUid) {
   const uid = getCurrentUid();
