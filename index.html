@@ -15,7 +15,7 @@
   }
   button { background:#2196F3; color:white; border:none; cursor:pointer; }
   nav { position:fixed; bottom:0; left:0; right:0; background:white; display:flex; justify-content:space-around; border-top:1px solid #ccc; padding:10px 0; }
-  nav button { background:none; color:#555; font-size:24px; border:none; cursor:pointer; }
+  nav button { background:none; color:#555; border:none; font-size:24px; cursor:pointer; }
   nav button.active { color:#2196F3; font-weight:bold; }
 </style>
 </head>
@@ -53,6 +53,10 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+function getCurrentUid() {
+  return auth.currentUser ? auth.currentUser.uid : null;
+}
+
 function renderLogin() {
   document.getElementById('app').innerHTML = `
     <div class="container card">
@@ -85,7 +89,8 @@ function login() {
     alert('Email must end with @xinn.lab');
     return;
   }
-  auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+  auth.signInWithEmailAndPassword(email, pass)
+    .catch(e => alert(e.message));
 }
 
 function register() {
@@ -94,13 +99,22 @@ function register() {
   const bio = document.getElementById('bio').value.trim();
   const email = document.getElementById('email').value.trim();
   const pass = document.getElementById('password').value.trim();
+
   if (!email.endsWith('@xinn.lab')) {
     alert('Email must end with @xinn.lab');
     return;
   }
   auth.createUserWithEmailAndPassword(email, pass)
     .then(cred => {
-      return db.collection('users').doc(cred.user.uid).set({ name, age, bio, email, friends: [] });
+      return db.collection('users').doc(cred.user.uid).set({
+        name,
+        age,
+        bio,
+        email,
+        friends: [],
+        friendRequestsReceived: [],
+        friendRequestsSent: []
+      });
     })
     .catch(e => alert(e.message));
 }
@@ -122,7 +136,7 @@ function createPost() {
   if (!content) return;
   db.collection('posts').add({
     content,
-    uid: auth.currentUser.uid,
+    uid: getCurrentUid(),
     likes: [],
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
@@ -167,41 +181,25 @@ function loadPosts() {
 }
 
 function toggleLike(postId) {
+  const uid = getCurrentUid();
+  if (!uid) return;
   const ref = db.collection('posts').doc(postId);
   ref.get().then(doc => {
     const data = doc.data();
     let likes = data.likes || [];
-    if (likes.includes(auth.currentUser.uid)) {
-      likes = likes.filter(id => id !== auth.currentUser.uid);
+    if (likes.includes(uid)) {
+      likes = likes.filter(id => id !== uid);
     } else {
-      likes.push(auth.currentUser.uid);
+      likes.push(uid);
     }
     ref.update({ likes });
   });
 }
 
-function showPage(page) {
-  // highlight nav button active state
-  Array.from(document.querySelectorAll('nav button')).forEach(btn => btn.classList.remove('active'));
-  const navButtons = {
-    feed: 0,
-    friends: 1,
-    chat: 2,
-    profile: 3,
-    settings: 4
-  };
-  const idx = navButtons[page];
-  if (idx !== undefined) document.querySelectorAll('nav button')[idx].classList.add('active');
-
-  if (page === 'feed') renderFeed();
-  else if (page === 'profile') renderProfile();
-  else if (page === 'friends') renderFriends();
-  else if (page === 'chat') renderChat();
-  else if (page === 'settings') renderSettings();
-}
-
 function renderProfile() {
-  db.collection('users').doc(auth.currentUser.uid).get().then(doc => {
+  const uid = getCurrentUid();
+  if (!uid) return;
+  db.collection('users').doc(uid).get().then(doc => {
     const u = doc.data();
     document.getElementById('app').innerHTML = `
       <div class="container">
@@ -216,7 +214,9 @@ function renderProfile() {
 }
 
 function editProfile() {
-  db.collection('users').doc(auth.currentUser.uid).get().then(doc => {
+  const uid = getCurrentUid();
+  if (!uid) return;
+  db.collection('users').doc(uid).get().then(doc => {
     const u = doc.data();
     document.getElementById('app').innerHTML = `
       <div class="container card">
@@ -229,30 +229,19 @@ function editProfile() {
 }
 
 function saveProfile() {
+  const uid = getCurrentUid();
+  if (!uid) return;
   const name = document.getElementById('name').value.trim();
   const age = document.getElementById('age').value.trim();
   const bio = document.getElementById('bio').value.trim();
-  db.collection('users').doc(auth.currentUser.uid).update({ name, age, bio })
-    .then(() => renderProfile())
-    .catch(e => alert(e.message));
+  db.collection('users').doc(uid).update({ name, age, bio }).then(() => {
+    renderProfile();
+  });
 }
 
-function renderChat() {
-  document.getElementById('app').innerHTML = `<div class="container card"><p>Chat feature here...</p></div>`;
-}
-
-function renderSettings() {
-  document.getElementById('app').innerHTML = `
-    <div class="container card">
-      <button onclick="auth.signOut()">Logout</button>
-    </div>`;
-}
-
-function getCurrentUid() {
-  return auth.currentUser ? auth.currentUser.uid : null;
-}
-
-// --- Friend system code starts here ---
+// ===================
+// FRIEND SYSTEM
+// ===================
 
 async function renderFriends() {
   const uid = getCurrentUid();
@@ -331,8 +320,8 @@ async function renderFriends() {
       `).join('');
     }
 
-    // Non-friends excluding sent requests (to prevent double requests)
-    const nonFriendUsers = allUsers.filter(u => 
+    // Non-friends excluding sent and received requests
+    const nonFriendUsers = allUsers.filter(u =>
       !friends.includes(u.id) &&
       !friendRequestsSent.includes(u.id) &&
       !friendRequestsReceived.includes(u.id)
@@ -388,7 +377,7 @@ async function acceptFriend(fromUid) {
   const fromUserRef = db.collection('users').doc(fromUid);
 
   try {
-    // Remove request
+    // Remove request, add friends mutually
     await userRef.update({
       friendRequestsReceived: firebase.firestore.FieldValue.arrayRemove(fromUid),
       friends: firebase.firestore.FieldValue.arrayUnion(fromUid)
@@ -433,7 +422,6 @@ async function removeFriend(friendUid) {
   const friendRef = db.collection('users').doc(friendUid);
 
   try {
-    // Remove from both friends lists (mutual removal)
     await userRef.update({
       friends: firebase.firestore.FieldValue.arrayRemove(friendUid)
     });
@@ -447,8 +435,39 @@ async function removeFriend(friendUid) {
   }
 }
 
+// ===================
+// Dummy chat page placeholder
+function renderChat() {
+  document.getElementById('app').innerHTML = `
+    <div class="container card">
+      <p>Chat feature coming soon...</p>
+    </div>`;
+}
 
-// --- Friend system code ends here ---
+function renderSettings() {
+  document.getElementById('app').innerHTML = `
+    <div class="container card">
+      <button onclick="auth.signOut()">Logout</button>
+    </div>`;
+}
+
+function showPage(page) {
+  // Highlight active nav button
+  [...document.querySelectorAll('nav button')].forEach(btn => btn.classList.remove('active'));
+  const btnMap = {feed:0, friends:1, chat:2, profile:3, settings:4};
+  if (btnMap.hasOwnProperty(page)) {
+    document.querySelectorAll('nav button')[btnMap[page]].classList.add('active');
+  }
+
+  switch(page) {
+    case 'feed': renderFeed(); break;
+    case 'friends': renderFriends(); break;
+    case 'chat': renderChat(); break;
+    case 'profile': renderProfile(); break;
+    case 'settings': renderSettings(); break;
+    default: renderFeed();
+  }
+}
 
 auth.onAuthStateChanged(user => {
   if (user) {
@@ -460,5 +479,6 @@ auth.onAuthStateChanged(user => {
   }
 });
 </script>
+
 </body>
 </html>
