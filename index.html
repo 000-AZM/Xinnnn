@@ -1,235 +1,229 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Xinn Social — Demo</title>
-
-  <!-- Materialize CSS (Material UI look) -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet"/>
-  <!-- Material Icons -->
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xinn Social</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  body { font-family: Arial, sans-serif; margin:0; background:#f0f2f5; }
+  header { background:#2196F3; color:white; padding:10px; text-align:center; }
+  .container { padding:20px; }
+  .card { background:white; padding:15px; margin:10px 0; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+  input, textarea, button, select {
+    width:100%; padding:10px; margin:5px 0; border:1px solid #ccc; border-radius:5px;
+  }
+  button { background:#2196F3; color:white; border:none; cursor:pointer; }
+  nav { position:fixed; bottom:0; left:0; right:0; background:white; display:flex; justify-content:space-around; border-top:1px solid #ccc; padding:10px 0; }
+  nav button { background:none; color:#555; }
+  nav button.active { color:#2196F3; font-weight:bold; }
+</style>
 </head>
 <body>
 
-  <!-- NAV -->
-  <nav class="nav-extended white">
-    <div class="nav-wrapper container">
-      <a href="#" class="brand-logo black-text">Xinn Social</a>
-      <ul id="nav-mobile" class="right hide-on-med-and-down">
-        <li><a href="#feed" class="black-text">Feed</a></li>
-        <li><a href="#friends" class="black-text">Friends</a></li>
-        <li><a href="#profile" class="black-text" id="nav-profile-link">Profile</a></li>
-        <li><a href="#chat" class="black-text">Chat</a></li>
-        <li><a href="#settings" class="black-text">Settings</a></li>
-      </ul>
-    </div>
-  </nav>
+<header><h2>Xinn Social</h2></header>
 
-  <!-- MAIN CONTAINER -->
-  <main class="container" id="app">
-    <!-- AUTH SCREEN -->
-    <div id="auth-screen" class="section">
-      <h5>Welcome to Xinn Social</h5>
+<div id="app"></div>
 
-      <div class="row">
-        <div class="col s12 m6">
-          <div class="card">
-            <div class="card-content">
-              <span class="card-title">Login</span>
-              <div class="row">
-                <div class="input-field col s12">
-                  <input id="login-email" type="email" />
-                  <label for="login-email">Email</label>
-                </div>
-                <div class="input-field col s12">
-                  <input id="login-password" type="password" />
-                  <label for="login-password">Password</label>
-                </div>
-                <div class="col s12">
-                  <button id="btn-login" class="btn">Login</button>
-                </div>
-                <div class="col s12" style="margin-top:.5rem">
-                  <a href="#" id="show-signup">Don't have account? Sign up</a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+<nav id="navBar" style="display:none;">
+  <button onclick="showPage('feed')"><span class="material-icons">home</span></button>
+  <button onclick="showPage('friends')"><span class="material-icons">group</span></button>
+  <button onclick="showPage('chat')"><span class="material-icons">chat</span></button>
+  <button onclick="showPage('profile')"><span class="material-icons">person</span></button>
+  <button onclick="showPage('settings')"><span class="material-icons">settings</span></button>
+</nav>
 
-        <div class="col s12 m6" id="signup-panel">
-          <div class="card">
-            <div class="card-content">
-              <span class="card-title">Sign up (must end with <code>@xinn.lab</code>)</span>
-              <div class="row">
-                <div class="input-field col s12"><input id="signup-name" type="text"><label for="signup-name">Full name</label></div>
-                <div class="input-field col s12"><input id="signup-email" type="email"><label for="signup-email">Email</label></div>
-                <div class="input-field col s12"><input id="signup-password" type="password"><label for="signup-password">Password</label></div>
-                <div class="input-field col s12"><input id="signup-age" type="number"><label for="signup-age">Age</label></div>
-                <div class="col s12"><button id="btn-signup" class="btn">Create account</button></div>
-                <div class="col s12" style="margin-top:.5rem">
-                  <a href="#" id="show-login">Already have account? Login</a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCGN7t5FjDeJ-ewm7S_9z0VJrRSggTaJ2Q",
+  authDomain: "coin-base-by-hector.firebaseapp.com",
+  databaseURL: "https://coin-base-by-hector-default-rtdb.firebaseio.com",
+  projectId: "coin-base-by-hector",
+  storageBucket: "coin-base-by-hector.firebasestorage.app",
+  messagingSenderId: "398789890422",
+  appId: "1:398789890422:web:ed6a928037b24be2e36a57",
+  measurementId: "G-SGJJM5K3G9"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+function renderLogin() {
+  document.getElementById('app').innerHTML = `
+    <div class="container card">
+      <h3>Login to Xinn Social</h3>
+      <input type="email" id="email" placeholder="Email (@xinn.lab only)">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="login()">Login</button>
+      <p>Or <a href="#" onclick="renderRegister()">Register</a></p>
+    </div>`;
+}
+
+function renderRegister() {
+  document.getElementById('app').innerHTML = `
+    <div class="container card">
+      <h3>Create Account</h3>
+      <input type="text" id="name" placeholder="Full Name">
+      <input type="number" id="age" placeholder="Age">
+      <textarea id="bio" placeholder="Bio"></textarea>
+      <input type="email" id="email" placeholder="Email (@xinn.lab only)">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="register()">Register</button>
+      <p>Already have an account? <a href="#" onclick="renderLogin()">Login</a></p>
+    </div>`;
+}
+
+function login() {
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value.trim();
+  if (!email.endsWith('@xinn.lab')) {
+    alert('Email must end with @xinn.lab');
+    return;
+  }
+  auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+}
+
+function register() {
+  const name = document.getElementById('name').value.trim();
+  const age = document.getElementById('age').value.trim();
+  const bio = document.getElementById('bio').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value.trim();
+  if (!email.endsWith('@xinn.lab')) {
+    alert('Email must end with @xinn.lab');
+    return;
+  }
+  auth.createUserWithEmailAndPassword(email, pass)
+    .then(cred => {
+      return db.collection('users').doc(cred.user.uid).set({ name, age, bio, email });
+    })
+    .catch(e => alert(e.message));
+}
+
+function renderFeed() {
+  document.getElementById('app').innerHTML = `
+    <div class="container">
+      <div class="card">
+        <textarea id="postContent" placeholder="What's on your mind?"></textarea>
+        <button onclick="createPost()">Post</button>
       </div>
-    </div>
+      <div id="feedPosts"></div>
+    </div>`;
+  loadPosts();
+}
 
-    <!-- APP PAGES: will show/hide based on auth and route -->
-    <div id="app-pages" style="display:none">
+function createPost() {
+  const content = document.getElementById('postContent').value.trim();
+  if (!content) return;
+  db.collection('posts').add({
+    content,
+    uid: auth.currentUser.uid,
+    likes: [],
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  document.getElementById('postContent').value = '';
+}
 
-      <!-- FEED -->
-      <section id="feed" class="section">
-        <div class="row">
-          <div class="col s12 m8">
-            <div class="card">
-              <div class="card-content">
-                <div class="input-field">
-                  <textarea id="post-content" class="materialize-textarea"></textarea>
-                  <label for="post-content">What's on your mind?</label>
-                </div>
-                <button id="btn-post" class="btn">Post</button>
-              </div>
-            </div>
+function loadPosts() {
+  db.collection('posts').orderBy('timestamp', 'desc').onSnapshot(snap => {
+    let html = '';
+    snap.forEach(doc => {
+      const p = doc.data();
+      html += `<div class="card">
+        <p>${p.content}</p>
+        <button onclick="toggleLike('${doc.id}')">👍 Like (${p.likes.length})</button>
+      </div>`;
+    });
+    document.getElementById('feedPosts').innerHTML = html;
+  });
+}
 
-            <div id="posts-list"></div>
-          </div>
+function toggleLike(postId) {
+  const ref = db.collection('posts').doc(postId);
+  ref.get().then(doc => {
+    const data = doc.data();
+    let likes = data.likes || [];
+    if (likes.includes(auth.currentUser.uid)) {
+      likes = likes.filter(id => id !== auth.currentUser.uid);
+    } else {
+      likes.push(auth.currentUser.uid);
+    }
+    ref.update({ likes });
+  });
+}
 
-          <!-- Sidebar profile mini -->
-          <div class="col s12 m4">
-            <div class="card">
-              <div class="card-content">
-                <span class="card-title" id="sidebar-name">Your name</span>
-                <p id="sidebar-bio">Bio</p>
-                <p><strong>Age:</strong> <span id="sidebar-age"></span></p>
-                <a class="btn" href="#profile">View Profile</a>
-              </div>
-            </div>
+function showPage(page) {
+  if (page === 'feed') renderFeed();
+  if (page === 'profile') renderProfile();
+  if (page === 'friends') renderFriends();
+  if (page === 'chat') renderChat();
+  if (page === 'settings') renderSettings();
+}
 
-            <div class="card">
-              <div class="card-content">
-                <span class="card-title">Friend Requests</span>
-                <div id="friend-requests-list"></div>
-              </div>
-            </div>
-
-          </div>
+function renderProfile() {
+  db.collection('users').doc(auth.currentUser.uid).get().then(doc => {
+    const u = doc.data();
+    document.getElementById('app').innerHTML = `
+      <div class="container">
+        <div class="card">
+          <h3>${u.name}</h3>
+          <p>Age: ${u.age}</p>
+          <p>Bio: ${u.bio}</p>
+          <button onclick="editProfile()">Edit Profile</button>
         </div>
-      </section>
+      </div>`;
+  });
+}
 
-      <!-- FRIENDS -->
-      <section id="friends" class="section">
-        <div class="row">
-          <div class="col s12 m6">
-            <div class="card">
-              <div class="card-content">
-                <span class="card-title">Find Friends (search by name)</span>
-                <div class="input-field"><input id="search-user"><label>Search users</label></div>
-                <div id="search-results"></div>
-              </div>
-            </div>
-          </div>
+function editProfile() {
+  db.collection('users').doc(auth.currentUser.uid).get().then(doc => {
+    const u = doc.data();
+    document.getElementById('app').innerHTML = `
+      <div class="container card">
+        <input id="name" value="${u.name}">
+        <input id="age" value="${u.age}">
+        <textarea id="bio">${u.bio}</textarea>
+        <button onclick="saveProfile()">Save</button>
+      </div>`;
+  });
+}
 
-          <div class="col s12 m6">
-            <div class="card">
-              <div class="card-content">
-                <span class="card-title">Your Friends</span>
-                <ul id="friends-list" class="collection"></ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+function saveProfile() {
+  const name = document.getElementById('name').value.trim();
+  const age = document.getElementById('age').value.trim();
+  const bio = document.getElementById('bio').value.trim();
+  db.collection('users').doc(auth.currentUser.uid).update({ name, age, bio });
+  renderProfile();
+}
 
-      <!-- PROFILE (owner view vs visitor view) -->
-      <section id="profile" class="section">
-        <div class="row">
-          <div class="col s12 m8">
-            <div class="card">
-              <div class="card-content">
-                <h5 id="profile-displayName"></h5>
-                <p id="profile-bio"></p>
-                <p><strong>Age:</strong> <span id="profile-age"></span></p>
-                <div id="profile-actions"></div>
-                <div id="profile-edit-form" style="display:none; margin-top:1rem">
-                  <div class="input-field"><input id="edit-name" type="text"><label for="edit-name">Name</label></div>
-                  <div class="input-field"><textarea id="edit-bio" class="materialize-textarea"></textarea><label for="edit-bio">Bio</label></div>
-                  <div class="input-field"><input id="edit-age" type="number"><label for="edit-age">Age</label></div>
-                  <button id="save-profile" class="btn">Save</button>
-                  <button id="cancel-edit" class="btn grey">Cancel</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+function renderFriends() {
+  document.getElementById('app').innerHTML = `<div class="container card"><p>Friend list feature here...</p></div>`;
+}
 
-      <!-- CHAT -->
-      <section id="chat" class="section">
-        <div class="row">
-          <div class="col s12 m4">
-            <ul id="chat-friend-list" class="collection"></ul>
-          </div>
-          <div class="col s12 m8">
-            <div id="chat-window" class="card" style="min-height:300px;display:none">
-              <div class="card-content">
-                <h6 id="chat-with-name"></h6>
-                <div id="messages" style="height:300px;overflow:auto;border:1px solid #eee;padding:8px;margin-bottom:8px"></div>
-                <div class="input-field">
-                  <input id="chat-input" type="text"><label for="chat-input">Message</label>
-                </div>
-                <button id="send-msg" class="btn">Send</button>
-              </div>
-            </div>
-            <div id="no-chat" class="card"><div class="card-content">Select a friend to chat.</div></div>
-          </div>
-        </div>
-      </section>
+function renderChat() {
+  document.getElementById('app').innerHTML = `<div class="container card"><p>Chat feature here...</p></div>`;
+}
 
-      <!-- SETTINGS -->
-      <section id="settings" class="section">
-        <div class="row">
-          <div class="col s12 m6">
-            <div class="card">
-              <div class="card-content">
-                <h5>Account Settings</h5>
-                <p><strong>Email:</strong> <span id="settings-email"></span></p>
-                <button id="btn-change-pass" class="btn">Change Password</button>
-                <button id="btn-logout" class="btn red">Log out</button>
-              </div>
-            </div>
+function renderSettings() {
+  document.getElementById('app').innerHTML = `
+    <div class="container card">
+      <button onclick="auth.signOut()">Logout</button>
+    </div>`;
+}
 
-            <div class="card">
-              <div class="card-content">
-                <h5>Theme</h5>
-                <p>
-                  <label><input name="theme" type="radio" value="light" checked/><span>Light</span></label><br/>
-                  <label><input name="theme" type="radio" value="dark"/><span>Dark</span></label>
-                </p>
-                <button id="apply-theme" class="btn">Apply</button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <!-- Firebase SDKs (compat for simpler code) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
-  <!-- Materialize JS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
-  <script src="app.js"></script>
+auth.onAuthStateChanged(user => {
+  if (user) {
+    showPage('feed');
+    document.getElementById('navBar').style.display = 'flex';
+  } else {
+    renderLogin();
+    document.getElementById('navBar').style.display = 'none';
+  }
+});
+</script>
 </body>
 </html>
