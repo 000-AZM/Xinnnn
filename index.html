@@ -109,7 +109,7 @@ function renderFeed() {
   document.getElementById('app').innerHTML = `
     <div class="container">
       <div class="card">
-        <textarea id="postContent" placeholder="What's on your mind?"></textarea>
+        <textarea id="postContent" placeholder="What's on your mind?" style="resize:none;"></textarea>
         <button onclick="createPost()">Post</button>
       </div>
       <div id="feedPosts"></div>
@@ -132,14 +132,37 @@ function createPost() {
 function loadPosts() {
   db.collection('posts').orderBy('timestamp', 'desc').onSnapshot(snap => {
     let html = '';
+    let postPromises = [];
+
     snap.forEach(doc => {
       const p = doc.data();
-      html += `<div class="card">
-        <p>${p.content}</p>
-        <button onclick="toggleLike('${doc.id}')">👍 Like (${p.likes.length})</button>
-      </div>`;
+      postPromises.push(
+        db.collection('users').doc(p.uid).get().then(userDoc => {
+          const user = userDoc.data() || { name: "Unknown" };
+          const time = p.timestamp ? p.timestamp.toDate().toLocaleString() : "Just now";
+
+          html += `
+            <div class="card" style="padding: 12px;">
+              <div style="display:flex;align-items:center;margin-bottom:8px;">
+                <span class="material-icons" style="font-size:36px;color:#2196F3;margin-right:10px;">account_circle</span>
+                <div>
+                  <strong>${user.name}</strong><br>
+                  <small style="color:gray;">${time}</small>
+                </div>
+              </div>
+              <div style="margin:10px 0;font-size:15px;">${p.content}</div>
+              <hr style="margin:8px 0;">
+              <button onclick="toggleLike('${doc.id}')" style="background:none;color:#2196F3;border:none;cursor:pointer;">
+                👍 Like (${p.likes.length})
+              </button>
+            </div>`;
+        })
+      );
     });
-    document.getElementById('feedPosts').innerHTML = html;
+
+    Promise.all(postPromises).then(() => {
+      document.getElementById('feedPosts').innerHTML = html;
+    });
   });
 }
 
