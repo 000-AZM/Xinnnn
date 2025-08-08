@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Xinn Social</title>
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 <style>
   body { font-family: Arial, sans-serif; margin:0; background:#f0f2f5; }
   header { background:#2196F3; color:white; padding:10px; text-align:center; }
@@ -15,7 +15,7 @@
   }
   button { background:#2196F3; color:white; border:none; cursor:pointer; }
   nav { position:fixed; bottom:0; left:0; right:0; background:white; display:flex; justify-content:space-around; border-top:1px solid #ccc; padding:10px 0; }
-  nav button { background:none; color:#555; }
+  nav button { background:none; color:#555; font-size:24px; border:none; cursor:pointer; }
   nav button.active { color:#2196F3; font-weight:bold; }
 </style>
 </head>
@@ -26,11 +26,11 @@
 <div id="app"></div>
 
 <nav id="navBar" style="display:none;">
-  <button onclick="showPage('feed')"><span class="material-icons">home</span></button>
-  <button onclick="showPage('friends')"><span class="material-icons">group</span></button>
-  <button onclick="showPage('chat')"><span class="material-icons">chat</span></button>
-  <button onclick="showPage('profile')"><span class="material-icons">person</span></button>
-  <button onclick="showPage('settings')"><span class="material-icons">settings</span></button>
+  <button onclick="showPage('feed')" title="Feed"><span class="material-icons">home</span></button>
+  <button onclick="showPage('friends')" title="Friends"><span class="material-icons">group</span></button>
+  <button onclick="showPage('chat')" title="Chat"><span class="material-icons">chat</span></button>
+  <button onclick="showPage('profile')" title="Profile"><span class="material-icons">person</span></button>
+  <button onclick="showPage('settings')" title="Settings"><span class="material-icons">settings</span></button>
 </nav>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -57,8 +57,8 @@ function renderLogin() {
   document.getElementById('app').innerHTML = `
     <div class="container card">
       <h3>Login to Xinn Social</h3>
-      <input type="email" id="email" placeholder="Email (@xinn.lab only)">
-      <input type="password" id="password" placeholder="Password">
+      <input type="email" id="email" placeholder="Email (@xinn.lab only)" />
+      <input type="password" id="password" placeholder="Password" />
       <button onclick="login()">Login</button>
       <p>Or <a href="#" onclick="renderRegister()">Register</a></p>
     </div>`;
@@ -68,11 +68,11 @@ function renderRegister() {
   document.getElementById('app').innerHTML = `
     <div class="container card">
       <h3>Create Account</h3>
-      <input type="text" id="name" placeholder="Full Name">
-      <input type="number" id="age" placeholder="Age">
+      <input type="text" id="name" placeholder="Full Name" />
+      <input type="number" id="age" placeholder="Age" />
       <textarea id="bio" placeholder="Bio"></textarea>
-      <input type="email" id="email" placeholder="Email (@xinn.lab only)">
-      <input type="password" id="password" placeholder="Password">
+      <input type="email" id="email" placeholder="Email (@xinn.lab only)" />
+      <input type="password" id="password" placeholder="Password" />
       <button onclick="register()">Register</button>
       <p>Already have an account? <a href="#" onclick="renderLogin()">Login</a></p>
     </div>`;
@@ -100,7 +100,7 @@ function register() {
   }
   auth.createUserWithEmailAndPassword(email, pass)
     .then(cred => {
-      return db.collection('users').doc(cred.user.uid).set({ name, age, bio, email });
+      return db.collection('users').doc(cred.user.uid).set({ name, age, bio, email, friends: [] });
     })
     .catch(e => alert(e.message));
 }
@@ -146,12 +146,12 @@ function loadPosts() {
               <div style="display:flex;align-items:center;margin-bottom:8px;">
                 <span class="material-icons" style="font-size:36px;color:#2196F3;margin-right:10px;">account_circle</span>
                 <div>
-                  <strong>${user.name}</strong><br>
+                  <strong>${user.name}</strong><br />
                   <small style="color:gray;">${time}</small>
                 </div>
               </div>
               <div style="margin:10px 0;font-size:15px;">${p.content}</div>
-              <hr style="margin:8px 0;">
+              <hr style="margin:8px 0;" />
               <button onclick="toggleLike('${doc.id}')" style="background:none;color:#2196F3;border:none;cursor:pointer;">
                 👍 Like (${p.likes.length})
               </button>
@@ -181,11 +181,23 @@ function toggleLike(postId) {
 }
 
 function showPage(page) {
+  // highlight nav button active state
+  Array.from(document.querySelectorAll('nav button')).forEach(btn => btn.classList.remove('active'));
+  const navButtons = {
+    feed: 0,
+    friends: 1,
+    chat: 2,
+    profile: 3,
+    settings: 4
+  };
+  const idx = navButtons[page];
+  if (idx !== undefined) document.querySelectorAll('nav button')[idx].classList.add('active');
+
   if (page === 'feed') renderFeed();
-  if (page === 'profile') renderProfile();
-  if (page === 'friends') renderFriends();
-  if (page === 'chat') renderChat();
-  if (page === 'settings') renderSettings();
+  else if (page === 'profile') renderProfile();
+  else if (page === 'friends') renderFriends();
+  else if (page === 'chat') renderChat();
+  else if (page === 'settings') renderSettings();
 }
 
 function renderProfile() {
@@ -208,8 +220,8 @@ function editProfile() {
     const u = doc.data();
     document.getElementById('app').innerHTML = `
       <div class="container card">
-        <input id="name" value="${u.name}">
-        <input id="age" value="${u.age}">
+        <input id="name" value="${u.name}" />
+        <input id="age" value="${u.age}" />
         <textarea id="bio">${u.bio}</textarea>
         <button onclick="saveProfile()">Save</button>
       </div>`;
@@ -220,29 +232,45 @@ function saveProfile() {
   const name = document.getElementById('name').value.trim();
   const age = document.getElementById('age').value.trim();
   const bio = document.getElementById('bio').value.trim();
-  db.collection('users').doc(auth.currentUser.uid).update({ name, age, bio });
-  renderProfile();
+  db.collection('users').doc(auth.currentUser.uid).update({ name, age, bio })
+    .then(() => renderProfile())
+    .catch(e => alert(e.message));
 }
-// Add this helper function to get current user ID
+
+function renderChat() {
+  document.getElementById('app').innerHTML = `<div class="container card"><p>Chat feature here...</p></div>`;
+}
+
+function renderSettings() {
+  document.getElementById('app').innerHTML = `
+    <div class="container card">
+      <button onclick="auth.signOut()">Logout</button>
+    </div>`;
+}
+
 function getCurrentUid() {
   return auth.currentUser ? auth.currentUser.uid : null;
 }
+
+// --- Friend system code starts here ---
 
 async function renderFriends() {
   const uid = getCurrentUid();
   if (!uid) return;
 
   const app = document.getElementById('app');
-  app.innerHTML = `<div class="container"><h3>Friends</h3>
-    <div id="friendList" class="card" style="margin-bottom:20px;">
-      <h4>Your Friends</h4>
-      <div id="friendsContainer">Loading...</div>
-    </div>
-    <div id="allUsersList" class="card">
-      <h4>People You May Know</h4>
-      <div id="usersContainer">Loading...</div>
-    </div>
-  </div>`;
+  app.innerHTML = `
+    <div class="container">
+      <h3>Friends</h3>
+      <div id="friendList" class="card" style="margin-bottom:20px;">
+        <h4>Your Friends</h4>
+        <div id="friendsContainer">Loading...</div>
+      </div>
+      <div id="allUsersList" class="card">
+        <h4>People You May Know</h4>
+        <div id="usersContainer">Loading...</div>
+      </div>
+    </div>`;
 
   try {
     // Get current user's friends list
@@ -324,17 +352,7 @@ async function removeFriend(friendUid) {
   }
 }
 
-
-function renderChat() {
-  document.getElementById('app').innerHTML = `<div class="container card"><p>Chat feature here...</p></div>`;
-}
-
-function renderSettings() {
-  document.getElementById('app').innerHTML = `
-    <div class="container card">
-      <button onclick="auth.signOut()">Logout</button>
-    </div>`;
-}
+// --- Friend system code ends here ---
 
 auth.onAuthStateChanged(user => {
   if (user) {
