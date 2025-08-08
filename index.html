@@ -74,6 +74,73 @@
   <h1>XinnLab Social</h1>
   <button id="logout-btn" class="btn" style="display:none;">Logout</button>
 </header>
+  
+<!-- Feed Container -->
+<div id="feed"></div>
+
+<script>
+const feed = document.getElementById('feed');
+
+// Listen for real-time updates
+db.collection('posts').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+    feed.innerHTML = '';
+    snapshot.forEach(doc => {
+        const post = doc.data();
+
+        const postCard = document.createElement('div');
+        postCard.style.cssText = `
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-family: 'Roboto', sans-serif;
+        `;
+
+        const header = document.createElement('div');
+        header.style.cssText = `
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        `;
+
+        const avatar = document.createElement('div');
+        avatar.textContent = post.username.charAt(0).toUpperCase();
+        avatar.style.cssText = `
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #6200ea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 18px;
+        `;
+
+        const nameTime = document.createElement('div');
+        nameTime.innerHTML = `
+            <div style="font-weight: bold; font-size: 14px;">${post.username}</div>
+            <div style="font-size: 12px; color: gray;">
+                ${post.timestamp ? new Date(post.timestamp.toDate()).toLocaleString() : 'Just now'}
+            </div>
+        `;
+
+        header.appendChild(avatar);
+        header.appendChild(nameTime);
+
+        const content = document.createElement('div');
+        content.textContent = post.text;
+        content.style.fontSize = '15px';
+
+        postCard.appendChild(header);
+        postCard.appendChild(content);
+        feed.appendChild(postCard);
+    });
+});
+</script>
 
 <!-- Login Page -->
 <div id="login-page" style="padding:20px;">
