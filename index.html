@@ -1,106 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>XinnLab Social</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Google Fonts & Material Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      background: #f0f2f5;
-      margin: 0;
-    }
-    header {
-      background: #2196f3;
-      color: white;
-      padding: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 20px;
-    }
-    .btn {
-      background: #2196f3;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .card {
-      background: white;
-      border-radius: 8px;
-      padding: 12px;
-      margin: 10px auto;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      width: 95%;
-      max-width: 500px;
-    }
-    .card-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .card-header .name {
-      font-weight: 500;
-    }
-    .card-header .time {
-      font-size: 12px;
-      color: gray;
-      margin-left: auto;
-    }
-    #login-page, #feed-page, #profile-page, #settings-page {
-      display: none;
-    }
-    #post-form textarea {
-      width: 100%;
-      resize: none;
-      padding: 8px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      margin-bottom: 8px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xinn Social</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  body { font-family: Arial, sans-serif; margin:0; background:#f0f2f5; }
+  header { background:#2196F3; color:white; padding:10px; text-align:center; }
+  .container { padding:20px; }
+  .card { background:white; padding:15px; margin:10px 0; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+  input, textarea, button, select {
+    width:100%; padding:10px; margin:5px 0; border:1px solid #ccc; border-radius:5px;
+  }
+  button { background:#2196F3; color:white; border:none; cursor:pointer; }
+  nav { position:fixed; bottom:0; left:0; right:0; background:white; display:flex; justify-content:space-around; border-top:1px solid #ccc; padding:10px 0; }
+  nav button { background:none; color:#555; }
+  nav button.active { color:#2196F3; font-weight:bold; }
+</style>
 </head>
 <body>
 
-<header>
-  <h1>XinnLab Social</h1>
-  <button id="logout-btn" class="btn" style="display:none;">Logout</button>
-</header>
+<header><h2>Xinn Social</h2></header>
 
-<!-- Login Page -->
-<div id="login-page" style="padding:20px;">
-  <h2>Login / Register</h2>
-  <input id="email" type="text" placeholder="Username (no @xinn.lab)" style="width:100%;padding:8px;margin:5px 0;">
-  <input id="password" type="password" placeholder="Password" style="width:100%;padding:8px;margin:5px 0;">
-  <button id="login-btn" class="btn">Login</button>
-  <button id="register-btn" class="btn">Register</button>
-</div>
+<div id="app"></div>
 
-<!-- Feed Page -->
-<div id="feed-page">
-  <div style="padding:10px;">
-    <form id="post-form">
-      <textarea id="post-content" rows="3" placeholder="What's on your mind?"></textarea>
-      <button type="submit" class="btn">Post</button>
-    </form>
-  </div>
-  <div id="posts"></div>
-</div>
+<nav id="navBar" style="display:none;">
+  <button onclick="showPage('feed')"><span class="material-icons">home</span></button>
+  <button onclick="showPage('friends')"><span class="material-icons">group</span></button>
+  <button onclick="showPage('chat')"><span class="material-icons">chat</span></button>
+  <button onclick="showPage('profile')"><span class="material-icons">person</span></button>
+  <button onclick="showPage('settings')"><span class="material-icons">settings</span></button>
+</nav>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
 <script>
- const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyCGN7t5FjDeJ-ewm7S_9z0VJrRSggTaJ2Q",
   authDomain: "coin-base-by-hector.firebaseapp.com",
   databaseURL: "https://coin-base-by-hector-default-rtdb.firebaseio.com",
@@ -111,85 +49,182 @@
   measurementId: "G-SGJJM5K3G9"
 };
 
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  const app = firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+function renderLogin() {
+  document.getElementById('app').innerHTML = `
+    <div class="container card">
+      <h3>Login to Xinn Social</h3>
+      <input type="email" id="email" placeholder="Email (@xinn.lab only)">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="login()">Login</button>
+      <p>Or <a href="#" onclick="renderRegister()">Register</a></p>
+    </div>`;
+}
 
-  const loginPage = document.getElementById('login-page');
-  const feedPage = document.getElementById('feed-page');
-  const logoutBtn = document.getElementById('logout-btn');
-  const postsDiv = document.getElementById('posts');
+function renderRegister() {
+  document.getElementById('app').innerHTML = `
+    <div class="container card">
+      <h3>Create Account</h3>
+      <input type="text" id="name" placeholder="Full Name">
+      <input type="number" id="age" placeholder="Age">
+      <textarea id="bio" placeholder="Bio"></textarea>
+      <input type="email" id="email" placeholder="Email (@xinn.lab only)">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="register()">Register</button>
+      <p>Already have an account? <a href="#" onclick="renderLogin()">Login</a></p>
+    </div>`;
+}
 
-  // Auth State
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      loginPage.style.display = 'none';
-      feedPage.style.display = 'block';
-      logoutBtn.style.display = 'inline-block';
-      loadPosts();
-    } else {
-      loginPage.style.display = 'block';
-      feedPage.style.display = 'none';
-      logoutBtn.style.display = 'none';
-    }
-  });
-
-  // Login
-  document.getElementById('login-btn').onclick = () => {
-    const email = document.getElementById('email').value.trim() + '@xinn.lab';
-    const password = document.getElementById('password').value;
-    auth.signInWithEmailAndPassword(email, password)
-      .catch(err => alert(err.message));
-  };
-
-  // Register
-  document.getElementById('register-btn').onclick = () => {
-    const email = document.getElementById('email').value.trim() + '@xinn.lab';
-    const password = document.getElementById('password').value;
-    auth.createUserWithEmailAndPassword(email, password)
-      .catch(err => alert(err.message));
-  };
-
-  // Logout
-  logoutBtn.onclick = () => auth.signOut();
-
-  // Post submit
-  document.getElementById('post-form').addEventListener('submit', e => {
-    e.preventDefault();
-    const content = document.getElementById('post-content').value.trim();
-    if (!content) return;
-    const user = auth.currentUser;
-    db.collection('posts').add({
-      uid: user.uid,
-      name: user.email.split('@')[0],
-      content: content,
-      time: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-      document.getElementById('post-content').value = '';
-    });
-  });
-
-  // Load posts
-  function loadPosts() {
-    db.collection('posts').orderBy('time', 'desc').onSnapshot(snapshot => {
-      postsDiv.innerHTML = '';
-      snapshot.forEach(doc => {
-        const post = doc.data();
-        const timeStr = post.time?.toDate().toLocaleString() || 'Just now';
-        const card = `
-          <div class="card">
-            <div class="card-header">
-              <div class="name">${post.name}</div>
-              <div class="time">${timeStr}</div>
-            </div>
-            <div class="card-content">${post.content}</div>
-          </div>
-        `;
-        postsDiv.innerHTML += card;
-      });
-    });
+function login() {
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value.trim();
+  if (!email.endsWith('@xinn.lab')) {
+    alert('Email must end with @xinn.lab');
+    return;
   }
+  auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+}
+
+function register() {
+  const name = document.getElementById('name').value.trim();
+  const age = document.getElementById('age').value.trim();
+  const bio = document.getElementById('bio').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value.trim();
+  if (!email.endsWith('@xinn.lab')) {
+    alert('Email must end with @xinn.lab');
+    return;
+  }
+  auth.createUserWithEmailAndPassword(email, pass)
+    .then(cred => {
+      return db.collection('users').doc(cred.user.uid).set({ name, age, bio, email });
+    })
+    .catch(e => alert(e.message));
+}
+
+function renderFeed() {
+  document.getElementById('app').innerHTML = `
+    <div class="container">
+      <div class="card">
+        <textarea id="postContent" placeholder="What's on your mind?"></textarea>
+        <button onclick="createPost()">Post</button>
+      </div>
+      <div id="feedPosts"></div>
+    </div>`;
+  loadPosts();
+}
+
+function createPost() {
+  const content = document.getElementById('postContent').value.trim();
+  if (!content) return;
+  db.collection('posts').add({
+    content,
+    uid: auth.currentUser.uid,
+    likes: [],
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  document.getElementById('postContent').value = '';
+}
+
+function loadPosts() {
+  db.collection('posts').orderBy('timestamp', 'desc').onSnapshot(snap => {
+    let html = '';
+    snap.forEach(doc => {
+      const p = doc.data();
+      html += `<div class="card">
+        <p>${p.content}</p>
+        <button onclick="toggleLike('${doc.id}')">👍 Like (${p.likes.length})</button>
+      </div>`;
+    });
+    document.getElementById('feedPosts').innerHTML = html;
+  });
+}
+
+function toggleLike(postId) {
+  const ref = db.collection('posts').doc(postId);
+  ref.get().then(doc => {
+    const data = doc.data();
+    let likes = data.likes || [];
+    if (likes.includes(auth.currentUser.uid)) {
+      likes = likes.filter(id => id !== auth.currentUser.uid);
+    } else {
+      likes.push(auth.currentUser.uid);
+    }
+    ref.update({ likes });
+  });
+}
+
+function showPage(page) {
+  if (page === 'feed') renderFeed();
+  if (page === 'profile') renderProfile();
+  if (page === 'friends') renderFriends();
+  if (page === 'chat') renderChat();
+  if (page === 'settings') renderSettings();
+}
+
+function renderProfile() {
+  db.collection('users').doc(auth.currentUser.uid).get().then(doc => {
+    const u = doc.data();
+    document.getElementById('app').innerHTML = `
+      <div class="container">
+        <div class="card">
+          <h3>${u.name}</h3>
+          <p>Age: ${u.age}</p>
+          <p>Bio: ${u.bio}</p>
+          <button onclick="editProfile()">Edit Profile</button>
+        </div>
+      </div>`;
+  });
+}
+
+function editProfile() {
+  db.collection('users').doc(auth.currentUser.uid).get().then(doc => {
+    const u = doc.data();
+    document.getElementById('app').innerHTML = `
+      <div class="container card">
+        <input id="name" value="${u.name}">
+        <input id="age" value="${u.age}">
+        <textarea id="bio">${u.bio}</textarea>
+        <button onclick="saveProfile()">Save</button>
+      </div>`;
+  });
+}
+
+function saveProfile() {
+  const name = document.getElementById('name').value.trim();
+  const age = document.getElementById('age').value.trim();
+  const bio = document.getElementById('bio').value.trim();
+  db.collection('users').doc(auth.currentUser.uid).update({ name, age, bio });
+  renderProfile();
+}
+
+function renderFriends() {
+  document.getElementById('app').innerHTML = `<div class="container card"><p>Friend list feature here...</p></div>`;
+}
+
+function renderChat() {
+  document.getElementById('app').innerHTML = `<div class="container card"><p>Chat feature here...</p></div>`;
+}
+
+function renderSettings() {
+  document.getElementById('app').innerHTML = `
+    <div class="container card">
+      <button onclick="auth.signOut()">Logout</button>
+    </div>`;
+}
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    showPage('feed');
+    document.getElementById('navBar').style.display = 'flex';
+  } else {
+    renderLogin();
+    document.getElementById('navBar').style.display = 'none';
+  }
+});
 </script>
 </body>
 </html>
