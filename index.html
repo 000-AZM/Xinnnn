@@ -223,10 +223,107 @@ function saveProfile() {
   db.collection('users').doc(auth.currentUser.uid).update({ name, age, bio });
   renderProfile();
 }
-
-function renderFriends() {
-  document.getElementById('app').innerHTML = `<div class="container card"><p>Friend list feature here...</p></div>`;
+// Add this helper function to get current user ID
+function getCurrentUid() {
+  return auth.currentUser ? auth.currentUser.uid : null;
 }
+
+async function renderFriends() {
+  const uid = getCurrentUid();
+  if (!uid) return;
+
+  const app = document.getElementById('app');
+  app.innerHTML = `<div class="container"><h3>Friends</h3>
+    <div id="friendList" class="card" style="margin-bottom:20px;">
+      <h4>Your Friends</h4>
+      <div id="friendsContainer">Loading...</div>
+    </div>
+    <div id="allUsersList" class="card">
+      <h4>People You May Know</h4>
+      <div id="usersContainer">Loading...</div>
+    </div>
+  </div>`;
+
+  try {
+    // Get current user's friends list
+    const userDoc = await db.collection('users').doc(uid).get();
+    const userData = userDoc.data() || {};
+    const friends = userData.friends || [];
+
+    // Get all users except current user
+    const usersSnap = await db.collection('users').get();
+    const allUsers = [];
+    usersSnap.forEach(doc => {
+      if (doc.id !== uid) {
+        allUsers.push({ id: doc.id, ...doc.data() });
+      }
+    });
+
+    // Split users into friends and non-friends
+    const friendUsers = allUsers.filter(u => friends.includes(u.id));
+    const nonFriendUsers = allUsers.filter(u => !friends.includes(u.id));
+
+    // Render friends
+    const friendsContainer = document.getElementById('friendsContainer');
+    if (friendUsers.length === 0) {
+      friendsContainer.innerHTML = `<p>You have no friends yet.</p>`;
+    } else {
+      friendsContainer.innerHTML = friendUsers.map(u => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
+          <span>${u.name} (${u.email})</span>
+          <button style="background:#f44336;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;"
+            onclick="removeFriend('${u.id}')">Remove</button>
+        </div>
+      `).join('');
+    }
+
+    // Render non-friends
+    const usersContainer = document.getElementById('usersContainer');
+    if (nonFriendUsers.length === 0) {
+      usersContainer.innerHTML = `<p>No other users found.</p>`;
+    } else {
+      usersContainer.innerHTML = nonFriendUsers.map(u => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
+          <span>${u.name} (${u.email})</span>
+          <button style="background:#2196F3;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;"
+            onclick="addFriend('${u.id}')">Add Friend</button>
+        </div>
+      `).join('');
+    }
+
+  } catch (err) {
+    document.getElementById('app').innerHTML = `<p>Error loading friends: ${err.message}</p>`;
+  }
+}
+
+async function addFriend(friendUid) {
+  const uid = getCurrentUid();
+  if (!uid) return;
+  const userRef = db.collection('users').doc(uid);
+  try {
+    await userRef.update({
+      friends: firebase.firestore.FieldValue.arrayUnion(friendUid)
+    });
+    renderFriends();
+  } catch (err) {
+    alert('Error adding friend: ' + err.message);
+  }
+}
+
+async function removeFriend(friendUid) {
+  const uid = getCurrentUid();
+  if (!uid) return;
+  const userRef = db.collection('users').doc(uid);
+  try {
+    await userRef.update({
+      friends: firebase.firestore.FieldValue.arrayRemove(friendUid)
+    });
+    renderFriends();
+  } catch (err) {
+    alert('Error removing friend: ' + err.message);
+  }
+}
+
 
 function renderChat() {
   document.getElementById('app').innerHTML = `<div class="container card"><p>Chat feature here...</p></div>`;
