@@ -626,7 +626,6 @@ function loadFriendRequests() {
   const listDiv = document.getElementById('friendRequestsList');
   listDiv.innerHTML = 'Loading...';
 
-  // Show incoming requests where to = current user and status = pending
   db.collection('friendRequests')
     .where('to', '==', uid)
     .where('status', '==', 'pending')
@@ -639,20 +638,20 @@ function loadFriendRequests() {
       }
 
       let html = '';
-      let userPromises = [];
+      let promises = [];
 
       snapshot.forEach(doc => {
         const data = doc.data();
         const requestId = doc.id;
-        userPromises.push(
+        promises.push(
           db.collection('users').doc(data.from).get().then(userDoc => {
             const user = userDoc.data() || { name: "Unknown" };
             html += `
-              <div class="request-item">
+              <div class="request-item" style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #ddd;">
                 <span>${escapeHtml(user.name)}</span>
-                <div class="request-actions">
-                  <button class="accept" onclick="acceptFriendRequest('${requestId}', '${data.from}')">Accept</button>
-                  <button class="decline" onclick="declineFriendRequest('${requestId}')">Decline</button>
+                <div>
+                  <button onclick="acceptFriendRequest('${requestId}', '${data.from}')">Accept</button>
+                  <button onclick="declineFriendRequest('${requestId}')">Decline</button>
                 </div>
               </div>
             `;
@@ -660,11 +659,16 @@ function loadFriendRequests() {
         );
       });
 
-      Promise.all(userPromises).then(() => {
+      Promise.all(promises).then(() => {
         listDiv.innerHTML = html;
       });
+    })
+    .catch(e => {
+      listDiv.innerHTML = `<p style="color:red;">Error loading requests: ${e.message}</p>`;
+      console.error(e);
     });
 }
+
 
 function acceptFriendRequest(requestId, fromUid) {
   const uid = getCurrentUid();
