@@ -207,6 +207,16 @@
   #chatInput {
     flex-grow: 1;
   }
+  /* pending badge small */
+  .badge {
+    background:#ff5252;
+    color:#fff;
+    padding:2px 6px;
+    border-radius:12px;
+    font-size:12px;
+    display:inline-block;
+    margin-left:6px;
+  }
   @media (max-width: 600px) {
     #app { padding-bottom: 100px; }
     nav { height: 56px; }
@@ -251,14 +261,13 @@ function getCurrentUid() {
   return auth.currentUser ? auth.currentUser.uid : null;
 }
 function escapeHtml(text) {
-  if (!text) return "";
-  return text.replace(/[&<>"']/g, (m) => ({
+  if (!text && text !== 0) return "";
+  return String(text).replace(/[&<>"']/g, (m) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[m]);
 }
 
 // ==== AUTH ====
-
 // Show login form
 function renderLogin() {
   document.getElementById('app').innerHTML = `
@@ -311,7 +320,6 @@ function register() {
 }
 
 // ==== NAV ====
-
 function showPage(page) {
   // Highlight nav buttons
   ['navFeed','navFriends','navChat','navProfile','navSettings'].forEach(id=>{
@@ -331,7 +339,6 @@ function showPage(page) {
 }
 
 // ==== FEED ====
-
 function renderFeed() {
   document.getElementById('app').innerHTML = `
     <div class="card">
@@ -410,7 +417,6 @@ function toggleLike(postId) {
 }
 
 // ==== PROFILE ====
-
 function renderProfile() {
   const uid = getCurrentUid();
   if (!uid) return;
@@ -460,7 +466,7 @@ function saveProfile() {
 }
 
 // ==== FRIENDS SYSTEM ====
-
+// Render friends page (search + pending + friends)
 function renderFriends() {
   document.getElementById('app').innerHTML = `
     <div class="card">
@@ -468,7 +474,7 @@ function renderFriends() {
       <div id="searchResults" style="margin-top:12px;"></div>
     </div>
     <div class="card" style="margin-top:12px;">
-      <h3>Pending Friend Requests</h3>
+      <h3>Pending Friend Requests <span id="pendingCount" class="badge" style="display:none;"></span></h3>
       <div id="friendRequestsList">Loading...</div>
     </div>
     <div class="card" style="margin-top:12px;">
@@ -491,10 +497,12 @@ function renderFriends() {
     }, 500);
   });
 
-  loadFriendRequests();
-  loadFriends();
+  // Start live listeners
+  liveFriendRequestsListener(); // starts onSnapshot
+  liveFriendsListener(); // starts onSnapshot
 }
 
+// SEARCH users by name or email (prefix search)
 function searchUsers(query) {
   const uid = getCurrentUid();
   if (!uid) return;
@@ -502,7 +510,7 @@ function searchUsers(query) {
   const resultsDiv = document.getElementById('searchResults');
   resultsDiv.innerHTML = 'Searching...';
 
-  // Search by name or email case-insensitive start with
+  // Search by name prefix
   db.collection('users')
     .where('name', '>=', query)
     .where('name', '<=', query + '\uf8ff')
@@ -514,7 +522,7 @@ function searchUsers(query) {
         if (doc.id !== uid) users.push({ id: doc.id, ...doc.data() });
       });
 
-      // Also search by email if different
+      // If none by name, also try email
       if (users.length === 0) {
         return db.collection('users')
           .where('email', '>=', query)
@@ -532,17 +540,15 @@ function searchUsers(query) {
       }
     })
     .then(users => {
-      if (users.length === 0) {
+      if (!users || users.length === 0) {
         resultsDiv.innerHTML = '<p>No users found.</p>';
         return;
       }
 
-      // For each user, determine friend/request status
+      // Determine relation for each user
       const uid = getCurrentUid();
-      // Get current friends
       db.collection('friends').doc(uid).get().then(friendDoc => {
         const friends = (friendDoc.exists && friendDoc.data().friends) || [];
-        // Get sent friend requests
         db.collection('friendRequests')
           .where('from', '==', uid)
           .where('status', '==', 'pending')
@@ -568,11 +574,12 @@ function searchUsers(query) {
     });
 }
 
+// SEND friend request (with timestamp)
 function sendFriendRequest(toUid) {
   const uid = getCurrentUid();
   if (!uid) return alert('Not logged in');
 
-  // Check existing pending requests to avoid duplicates
+  // Avoid duplicate pending requests
   db.collection('friendRequests')
     .where('from', '==', uid)
     .where('to', '==', toUid)
@@ -580,7 +587,6 @@ function sendFriendRequest(toUid) {
     .get()
     .then(snap => {
       if (!snap.empty) return alert('Friend request already sent');
-      // Create friend request
       return db.collection('friendRequests').add({
         from: uid,
         to: toUid,
@@ -590,12 +596,14 @@ function sendFriendRequest(toUid) {
     })
     .then(() => {
       alert('Friend request sent');
-      searchUsers(document.getElementById('friendSearch').value.trim());
-      loadFriendRequests();
+      // refresh search results & UI
+      const sbox = document.getElementById('friendSearch');
+      if (sbox && sbox.value.trim()) searchUsers(sbox.value.trim());
     })
     .catch(e => alert('Error sending friend request: ' + e.message));
 }
 
+// CANCEL friend request (sender can cancel)
 function cancelFriendRequest(toUid) {
   const uid = getCurrentUid();
   if (!uid) return alert('Not logged in');
@@ -613,116 +621,99 @@ function cancelFriendRequest(toUid) {
     })
     .then(() => {
       alert('Friend request canceled');
-      searchUsers(document.getElementById('friendSearch').value.trim());
-      loadFriendRequests();
+      const sbox = document.getElementById('friendSearch');
+      if (sbox && sbox.value.trim()) searchUsers(sbox.value.trim());
     })
     .catch(e => alert('Error canceling friend request: ' + e.message));
 }
 
-function loadFriendRequests() {
+// LIVE listener for incoming pending friend requests (to current user)
+let friendRequestsUnsub = null;
+function liveFriendRequestsListener() {
   const uid = getCurrentUid();
   if (!uid) return;
 
-  const listDiv = document.getElementById('friendRequestsList');
-  listDiv.innerHTML = 'Loading...';
+  // clean previous listener if any
+  if (friendRequestsUnsub) friendRequestsUnsub();
 
-  // Show incoming requests where to = current user and status = pending
-  db.collection('friendRequests')
+  const listDiv = document.getElementById('friendRequestsList');
+  const pendingCountSpan = document.getElementById('pendingCount');
+
+  friendRequestsUnsub = db.collection('friendRequests')
     .where('to', '==', uid)
     .where('status', '==', 'pending')
     .orderBy('timestamp', 'desc')
-    .get()
-    .then(snapshot => {
+    .onSnapshot(snapshot => {
+      // Update pending count badge
+      if (pendingCountSpan) {
+        if (snapshot.size > 0) {
+          pendingCountSpan.style.display = 'inline-block';
+          pendingCountSpan.textContent = snapshot.size;
+        } else {
+          pendingCountSpan.style.display = 'none';
+          pendingCountSpan.textContent = '';
+        }
+      }
+
+      if (!listDiv) return;
       if (snapshot.empty) {
         listDiv.innerHTML = '<p>No pending requests.</p>';
         return;
       }
 
       let html = '';
-      let userPromises = [];
-
+      const promises = [];
       snapshot.forEach(doc => {
         const data = doc.data();
         const requestId = doc.id;
-        userPromises.push(
-          db.collection('users').doc(data.from).get().then(userDoc => {
-            const user = userDoc.data() || { name: "Unknown" };
-            html += `
-              <div class="request-item">
-                <span>${escapeHtml(user.name)}</span>
-                <div class="request-actions">
-                  <button class="accept" onclick="acceptFriendRequest('${requestId}', '${data.from}')">Accept</button>
-                  <button class="decline" onclick="declineFriendRequest('${requestId}')">Decline</button>
-                </div>
+        // Fetch the sender's user document to get name
+        promises.push(db.collection('users').doc(data.from).get().then(userDoc => {
+          const user = userDoc.exists ? userDoc.data() : { name: 'Unknown' };
+          html += `
+            <div class="request-item">
+              <span>${escapeHtml(user.name)}</span>
+              <div class="request-actions">
+                <button class="accept" onclick="acceptFriendRequest('${requestId}', '${data.from}')">Accept</button>
+                <button class="decline" onclick="declineFriendRequest('${requestId}')">Decline</button>
               </div>
-            `;
-          })
-        );
+            </div>
+          `;
+        }));
       });
 
-      Promise.all(userPromises).then(() => {
+      Promise.all(promises).then(() => {
         listDiv.innerHTML = html;
       });
+    }, err => {
+      console.error('friendRequests onSnapshot error:', err);
     });
 }
 
-function acceptFriendRequest(requestId, fromUid) {
-  const uid = getCurrentUid();
-  if (!uid) return alert('Not logged in');
-
-  const batch = db.batch();
-
-  // Update friendRequests doc status to accepted
-  const reqRef = db.collection('friendRequests').doc(requestId);
-  batch.update(reqRef, { status: 'accepted' });
-
-  // Add to both users' friends list
-  const userFriendsRef = db.collection('friends').doc(uid);
-  const fromFriendsRef = db.collection('friends').doc(fromUid);
-
-  batch.set(userFriendsRef, { friends: firebase.firestore.FieldValue.arrayUnion(fromUid) }, { merge: true });
-  batch.set(fromFriendsRef, { friends: firebase.firestore.FieldValue.arrayUnion(uid) }, { merge: true });
-
-  batch.commit().then(() => {
-    alert('Friend request accepted');
-    loadFriendRequests();
-    loadFriends();
-  }).catch(e => alert('Error accepting request: ' + e.message));
-}
-
-function declineFriendRequest(requestId) {
-  const uid = getCurrentUid();
-  if (!uid) return alert('Not logged in');
-  db.collection('friendRequests').doc(requestId).update({ status: 'declined' })
-    .then(() => {
-      alert('Friend request declined');
-      loadFriendRequests();
-    })
-    .catch(e => alert('Error declining request: ' + e.message));
-}
-
-function loadFriends() {
+// LIVE friends listener - keeps your existing friends doc (array) live
+let friendsUnsub = null;
+function liveFriendsListener() {
   const uid = getCurrentUid();
   if (!uid) return;
 
-  const friendListDiv = document.getElementById('friendList');
-  friendListDiv.innerHTML = 'Loading...';
+  if (friendsUnsub) friendsUnsub();
 
-  db.collection('friends').doc(uid).get().then(doc => {
-    if (!doc.exists || !doc.data().friends.length) {
+  const friendListDiv = document.getElementById('friendList');
+  const friendsDocRef = db.collection('friends').doc(uid);
+
+  friendsUnsub = friendsDocRef.onSnapshot(docSnap => {
+    if (!friendListDiv) return;
+    if (!docSnap.exists || !Array.isArray(docSnap.data().friends) || docSnap.data().friends.length === 0) {
       friendListDiv.innerHTML = '<p>No friends yet.</p>';
       return;
     }
-    const friendIds = doc.data().friends;
-
-    const friendPromises = friendIds.map(fid =>
+    const friendIds = docSnap.data().friends;
+    const promises = friendIds.map(fid =>
       db.collection('users').doc(fid).get().then(userDoc => {
-        const u = userDoc.data() || { name: "Unknown" };
+        const u = userDoc.exists ? userDoc.data() : { name: 'Unknown' };
         return { id: fid, name: u.name };
       })
     );
-
-    Promise.all(friendPromises).then(friends => {
+    Promise.all(promises).then(friends => {
       let html = '';
       friends.forEach(friend => {
         html += `
@@ -734,28 +725,62 @@ function loadFriends() {
       });
       friendListDiv.innerHTML = html;
     });
+  }, err => {
+    console.error('friends onSnapshot error:', err);
   });
 }
 
+// Accept friend request: mark request accepted and update friends arrays
+function acceptFriendRequest(requestId, fromUid) {
+  const uid = getCurrentUid();
+  if (!uid) return alert('Not logged in');
+
+  const batch = db.batch();
+  const reqRef = db.collection('friendRequests').doc(requestId);
+  batch.update(reqRef, { status: 'accepted' });
+
+  const myFriendsRef = db.collection('friends').doc(uid);
+  const theirFriendsRef = db.collection('friends').doc(fromUid);
+
+  batch.set(myFriendsRef, { friends: firebase.firestore.FieldValue.arrayUnion(fromUid) }, { merge: true });
+  batch.set(theirFriendsRef, { friends: firebase.firestore.FieldValue.arrayUnion(uid) }, { merge: true });
+
+  batch.commit().then(() => {
+    // UI updates handled by onSnapshot listeners
+  }).catch(e => alert('Error accepting request: ' + e.message));
+}
+
+// Decline (set status declined)
+function declineFriendRequest(requestId) {
+  const uid = getCurrentUid();
+  if (!uid) return alert('Not logged in');
+
+  db.collection('friendRequests').doc(requestId).update({ status: 'declined' })
+    .then(() => {
+      // onSnapshot will update UI
+    })
+    .catch(e => alert('Error declining request: ' + e.message));
+}
+
+// Unfriend: remove from both users' friend arrays
 function unfriend(friendUid) {
   const uid = getCurrentUid();
   if (!uid) return alert('Not logged in');
 
   const batch = db.batch();
-  const userFriendsRef = db.collection('friends').doc(uid);
-  const friendFriendsRef = db.collection('friends').doc(friendUid);
+  const myFriendsRef = db.collection('friends').doc(uid);
+  const theirFriendsRef = db.collection('friends').doc(friendUid);
 
-  batch.update(userFriendsRef, { friends: firebase.firestore.FieldValue.arrayRemove(friendUid) });
-  batch.update(friendFriendsRef, { friends: firebase.firestore.FieldValue.arrayRemove(uid) });
+  batch.update(myFriendsRef, { friends: firebase.firestore.FieldValue.arrayRemove(friendUid) });
+  batch.update(theirFriendsRef, { friends: firebase.firestore.FieldValue.arrayRemove(uid) });
 
   batch.commit().then(() => {
-    alert('Unfriended successfully');
-    loadFriends();
+    // UI updated by onSnapshot listener
   }).catch(e => alert('Error unfriending: ' + e.message));
 }
 
 // ==== CHAT ====
-
+// (kept intact — unchanged logic)
 let selectedChatFriend = null;
 let unsubscribeChat = null;
 let unsubscribeTyping = null;
@@ -836,14 +861,14 @@ function loadChatFriends() {
   friendsListDiv.innerHTML = 'Loading...';
 
   db.collection('friends').doc(uid).get().then(doc => {
-    if (!doc.exists || !doc.data().friends.length) {
+    if (!doc.exists || !doc.data().friends || !doc.data().friends.length) {
       friendsListDiv.innerHTML = '<p>No friends available for chat.</p>';
       return;
     }
     const friendIds = doc.data().friends;
     const promises = friendIds.map(fid =>
       db.collection('users').doc(fid).get().then(userDoc => {
-        const u = userDoc.data() || { name: "Unknown" };
+        const u = userDoc.exists ? userDoc.data() : { name: "Unknown" };
         return { id: fid, name: u.name };
       })
     );
@@ -1024,7 +1049,6 @@ function listenTypingStatus() {
 }
 
 // ==== SETTINGS ====
-
 function renderSettings() {
   document.getElementById('app').innerHTML = `
     <div class="card">
@@ -1037,7 +1061,7 @@ function renderSettings() {
 }
 
 // ==== INIT APP ====
-
+// When auth state changes, show nav & default page
 auth.onAuthStateChanged(user => {
   if (user) {
     document.getElementById('navBar').style.display = 'flex';
@@ -1045,6 +1069,9 @@ auth.onAuthStateChanged(user => {
   } else {
     document.getElementById('navBar').style.display = 'none';
     renderLogin();
+    // clean up listeners
+    if (friendRequestsUnsub) { friendRequestsUnsub(); friendRequestsUnsub = null; }
+    if (friendsUnsub) { friendsUnsub(); friendsUnsub = null; }
   }
 });
 </script>
