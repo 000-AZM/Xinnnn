@@ -261,24 +261,30 @@ async function renderFriends() {
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="container">
-      <h3>Friends</h3>
+      <h3>Friend Requests</h3>
+      <div id="requestsContainer" class="card" style="margin-bottom:20px;">
+        <p>Loading friend requests...</p>
+      </div>
+
+      <h3>Your Friends</h3>
       <div id="friendList" class="card" style="margin-bottom:20px;">
-        <h4>Your Friends</h4>
         <div id="friendsContainer">Loading...</div>
       </div>
+
+      <h3>People You May Know</h3>
       <div id="allUsersList" class="card">
-        <h4>People You May Know</h4>
         <div id="usersContainer">Loading...</div>
       </div>
     </div>`;
 
   try {
-    // Get current user's friends list
     const userDoc = await db.collection('users').doc(uid).get();
     const userData = userDoc.data() || {};
     const friends = userData.friends || [];
+    const friendRequestsReceived = userData.friendRequestsReceived || [];
+    const friendRequestsSent = userData.friendRequestsSent || [];
 
-    // Get all users except current user
+    // Load all users except current
     const usersSnap = await db.collection('users').get();
     const allUsers = [];
     usersSnap.forEach(doc => {
@@ -287,11 +293,31 @@ async function renderFriends() {
       }
     });
 
-    // Split users into friends and non-friends
-    const friendUsers = allUsers.filter(u => friends.includes(u.id));
-    const nonFriendUsers = allUsers.filter(u => !friends.includes(u.id));
+    // Render friend requests (incoming)
+    const requestsContainer = document.getElementById('requestsContainer');
+    if (friendRequestsReceived.length === 0) {
+      requestsContainer.innerHTML = `<p>No friend requests.</p>`;
+    } else {
+      // Show each requester name + Accept / Decline buttons
+      const requestsHTML = await Promise.all(friendRequestsReceived.map(async requesterUid => {
+        const userDoc = await db.collection('users').doc(requesterUid).get();
+        const user = userDoc.data() || { name: "Unknown" };
+        return `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
+            <span>${user.name} (${user.email})</span>
+            <div>
+              <button style="background:#4CAF50;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;margin-right:5px;"
+                onclick="acceptFriend('${requesterUid}')">Accept</button>
+              <button style="background:#f44336;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;"
+                onclick="declineFriend('${requesterUid}')">Decline</button>
+            </div>
+          </div>`;
+      }));
+      requestsContainer.innerHTML = requestsHTML.join('');
+    }
 
-    // Render friends
+    // Friends list
+    const friendUsers = allUsers.filter(u => friends.includes(u.id));
     const friendsContainer = document.getElementById('friendsContainer');
     if (friendUsers.length === 0) {
       friendsContainer.innerHTML = `<p>You have no friends yet.</p>`;
@@ -305,7 +331,13 @@ async function renderFriends() {
       `).join('');
     }
 
-    // Render non-friends
+    // Non-friends excluding sent requests (to prevent double requests)
+    const nonFriendUsers = allUsers.filter(u => 
+      !friends.includes(u.id) &&
+      !friendRequestsSent.includes(u.id) &&
+      !friendRequestsReceived.includes(u.id)
+    );
+
     const usersContainer = document.getElementById('usersContainer');
     if (nonFriendUsers.length === 0) {
       usersContainer.innerHTML = `<p>No other users found.</p>`;
@@ -314,7 +346,7 @@ async function renderFriends() {
         <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">
           <span>${u.name} (${u.email})</span>
           <button style="background:#2196F3;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;"
-            onclick="addFriend('${u.id}')">Add Friend</button>
+            onclick="sendFriendRequest('${u.id}')">Add Friend</button>
         </div>
       `).join('');
     }
@@ -324,33 +356,97 @@ async function renderFriends() {
   }
 }
 
-async function addFriend(friendUid) {
+async function sendFriendRequest(toUid) {
   const uid = getCurrentUid();
   if (!uid) return;
+  if (uid === toUid) return alert("Can't add yourself.");
+
   const userRef = db.collection('users').doc(uid);
+  const toUserRef = db.collection('users').doc(toUid);
+
   try {
+    // Add toUid to current user's friendRequestsSent
     await userRef.update({
-      friends: firebase.firestore.FieldValue.arrayUnion(friendUid)
+      friendRequestsSent: firebase.firestore.FieldValue.arrayUnion(toUid)
     });
+    // Add uid to toUid's friendRequestsReceived
+    await toUserRef.update({
+      friendRequestsReceived: firebase.firestore.FieldValue.arrayUnion(uid)
+    });
+    alert('Friend request sent.');
     renderFriends();
   } catch (err) {
-    alert('Error adding friend: ' + err.message);
+    alert('Error sending friend request: ' + err.message);
+  }
+}
+
+async function acceptFriend(fromUid) {
+  const uid = getCurrentUid();
+  if (!uid) return;
+
+  const userRef = db.collection('users').doc(uid);
+  const fromUserRef = db.collection('users').doc(fromUid);
+
+  try {
+    // Remove request
+    await userRef.update({
+      friendRequestsReceived: firebase.firestore.FieldValue.arrayRemove(fromUid),
+      friends: firebase.firestore.FieldValue.arrayUnion(fromUid)
+    });
+    await fromUserRef.update({
+      friendRequestsSent: firebase.firestore.FieldValue.arrayRemove(uid),
+      friends: firebase.firestore.FieldValue.arrayUnion(uid)
+    });
+    alert('Friend request accepted.');
+    renderFriends();
+  } catch (err) {
+    alert('Error accepting friend request: ' + err.message);
+  }
+}
+
+async function declineFriend(fromUid) {
+  const uid = getCurrentUid();
+  if (!uid) return;
+
+  const userRef = db.collection('users').doc(uid);
+  const fromUserRef = db.collection('users').doc(fromUid);
+
+  try {
+    await userRef.update({
+      friendRequestsReceived: firebase.firestore.FieldValue.arrayRemove(fromUid)
+    });
+    await fromUserRef.update({
+      friendRequestsSent: firebase.firestore.FieldValue.arrayRemove(uid)
+    });
+    alert('Friend request declined.');
+    renderFriends();
+  } catch (err) {
+    alert('Error declining friend request: ' + err.message);
   }
 }
 
 async function removeFriend(friendUid) {
   const uid = getCurrentUid();
   if (!uid) return;
+
   const userRef = db.collection('users').doc(uid);
+  const friendRef = db.collection('users').doc(friendUid);
+
   try {
+    // Remove from both friends lists (mutual removal)
     await userRef.update({
       friends: firebase.firestore.FieldValue.arrayRemove(friendUid)
     });
+    await friendRef.update({
+      friends: firebase.firestore.FieldValue.arrayRemove(uid)
+    });
+    alert('Friend removed.');
     renderFriends();
   } catch (err) {
     alert('Error removing friend: ' + err.message);
   }
 }
+
 
 // --- Friend system code ends here ---
 
