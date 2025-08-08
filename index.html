@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Xinn Social — Demo</title>
+
+  <!-- Materialize CSS (Material UI look) -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet"/>
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav-extended white">
+    <div class="nav-wrapper container">
+      <a href="#" class="brand-logo black-text">Xinn Social</a>
+      <ul id="nav-mobile" class="right hide-on-med-and-down">
+        <li><a href="#feed" class="black-text">Feed</a></li>
+        <li><a href="#friends" class="black-text">Friends</a></li>
+        <li><a href="#profile" class="black-text" id="nav-profile-link">Profile</a></li>
+        <li><a href="#chat" class="black-text">Chat</a></li>
+        <li><a href="#settings" class="black-text">Settings</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTAINER -->
+  <main class="container" id="app">
+    <!-- AUTH SCREEN -->
+    <div id="auth-screen" class="section">
+      <h5>Welcome to Xinn Social</h5>
+
+      <div class="row">
+        <div class="col s12 m6">
+          <div class="card">
+            <div class="card-content">
+              <span class="card-title">Login</span>
+              <div class="row">
+                <div class="input-field col s12">
+                  <input id="login-email" type="email" />
+                  <label for="login-email">Email</label>
+                </div>
+                <div class="input-field col s12">
+                  <input id="login-password" type="password" />
+                  <label for="login-password">Password</label>
+                </div>
+                <div class="col s12">
+                  <button id="btn-login" class="btn">Login</button>
+                </div>
+                <div class="col s12" style="margin-top:.5rem">
+                  <a href="#" id="show-signup">Don't have account? Sign up</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col s12 m6" id="signup-panel">
+          <div class="card">
+            <div class="card-content">
+              <span class="card-title">Sign up (must end with <code>@xinn.lab</code>)</span>
+              <div class="row">
+                <div class="input-field col s12"><input id="signup-name" type="text"><label for="signup-name">Full name</label></div>
+                <div class="input-field col s12"><input id="signup-email" type="email"><label for="signup-email">Email</label></div>
+                <div class="input-field col s12"><input id="signup-password" type="password"><label for="signup-password">Password</label></div>
+                <div class="input-field col s12"><input id="signup-age" type="number"><label for="signup-age">Age</label></div>
+                <div class="col s12"><button id="btn-signup" class="btn">Create account</button></div>
+                <div class="col s12" style="margin-top:.5rem">
+                  <a href="#" id="show-login">Already have account? Login</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- APP PAGES: will show/hide based on auth and route -->
+    <div id="app-pages" style="display:none">
+
+      <!-- FEED -->
+      <section id="feed" class="section">
+        <div class="row">
+          <div class="col s12 m8">
+            <div class="card">
+              <div class="card-content">
+                <div class="input-field">
+                  <textarea id="post-content" class="materialize-textarea"></textarea>
+                  <label for="post-content">What's on your mind?</label>
+                </div>
+                <button id="btn-post" class="btn">Post</button>
+              </div>
+            </div>
+
+            <div id="posts-list"></div>
+          </div>
+
+          <!-- Sidebar profile mini -->
+          <div class="col s12 m4">
+            <div class="card">
+              <div class="card-content">
+                <span class="card-title" id="sidebar-name">Your name</span>
+                <p id="sidebar-bio">Bio</p>
+                <p><strong>Age:</strong> <span id="sidebar-age"></span></p>
+                <a class="btn" href="#profile">View Profile</a>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-content">
+                <span class="card-title">Friend Requests</span>
+                <div id="friend-requests-list"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- FRIENDS -->
+      <section id="friends" class="section">
+        <div class="row">
+          <div class="col s12 m6">
+            <div class="card">
+              <div class="card-content">
+                <span class="card-title">Find Friends (search by name)</span>
+                <div class="input-field"><input id="search-user"><label>Search users</label></div>
+                <div id="search-results"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col s12 m6">
+            <div class="card">
+              <div class="card-content">
+                <span class="card-title">Your Friends</span>
+                <ul id="friends-list" class="collection"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFILE (owner view vs visitor view) -->
+      <section id="profile" class="section">
+        <div class="row">
+          <div class="col s12 m8">
+            <div class="card">
+              <div class="card-content">
+                <h5 id="profile-displayName"></h5>
+                <p id="profile-bio"></p>
+                <p><strong>Age:</strong> <span id="profile-age"></span></p>
+                <div id="profile-actions"></div>
+                <div id="profile-edit-form" style="display:none; margin-top:1rem">
+                  <div class="input-field"><input id="edit-name" type="text"><label for="edit-name">Name</label></div>
+                  <div class="input-field"><textarea id="edit-bio" class="materialize-textarea"></textarea><label for="edit-bio">Bio</label></div>
+                  <div class="input-field"><input id="edit-age" type="number"><label for="edit-age">Age</label></div>
+                  <button id="save-profile" class="btn">Save</button>
+                  <button id="cancel-edit" class="btn grey">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHAT -->
+      <section id="chat" class="section">
+        <div class="row">
+          <div class="col s12 m4">
+            <ul id="chat-friend-list" class="collection"></ul>
+          </div>
+          <div class="col s12 m8">
+            <div id="chat-window" class="card" style="min-height:300px;display:none">
+              <div class="card-content">
+                <h6 id="chat-with-name"></h6>
+                <div id="messages" style="height:300px;overflow:auto;border:1px solid #eee;padding:8px;margin-bottom:8px"></div>
+                <div class="input-field">
+                  <input id="chat-input" type="text"><label for="chat-input">Message</label>
+                </div>
+                <button id="send-msg" class="btn">Send</button>
+              </div>
+            </div>
+            <div id="no-chat" class="card"><div class="card-content">Select a friend to chat.</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="settings" class="section">
+        <div class="row">
+          <div class="col s12 m6">
+            <div class="card">
+              <div class="card-content">
+                <h5>Account Settings</h5>
+                <p><strong>Email:</strong> <span id="settings-email"></span></p>
+                <button id="btn-change-pass" class="btn">Change Password</button>
+                <button id="btn-logout" class="btn red">Log out</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-content">
+                <h5>Theme</h5>
+                <p>
+                  <label><input name="theme" type="radio" value="light" checked/><span>Light</span></label><br/>
+                  <label><input name="theme" type="radio" value="dark"/><span>Dark</span></label>
+                </p>
+                <button id="apply-theme" class="btn">Apply</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Firebase SDKs (compat for simpler code) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <!-- Materialize JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+  <script src="app.js"></script>
+</body>
+</html>
