@@ -326,79 +326,103 @@
 
   // FRIENDS PAGE ------------------------------------------------
   // Render friends list + requests + search + add friend
-  function renderFriends() {
-    document.getElementById('app').innerHTML = `
-      <div>
-        <div class="card">
-          <input type="text" id="searchFriendInput" placeholder="Search users by name or email" oninput="searchUsers()" />
-          <ul id="searchResults" style="list-style:none; padding-left:0; max-height: 200px; overflow-y:auto;"></ul>
-        </div>
-        <div class="card">
-          <h3>Pending Friend Requests</h3>
-          <ul id="pendingRequests" style="list-style:none; padding-left:0;"></ul>
-        </div>
-        <div class="card">
-          <h3>Friends</h3>
-          <ul id="friendList" style="list-style:none; padding-left:0;"></ul>
-        </div>
+ // FRIENDS PAGE ------------------------------------------------
+// Render friends list + requests + search + add friend
+function renderFriends() {
+  document.getElementById('app').innerHTML = `
+    <div>
+      <div class="card">
+        <input type="text" id="searchFriendInput" placeholder="Search users by name or email" oninput="searchUsers()" />
+        <ul id="searchResults" style="list-style:none; padding-left:0; max-height: 200px; overflow-y:auto;"></ul>
       </div>
-    `;
-    loadFriends();
-    loadPendingRequests();
+      <div class="card">
+        <h3>Pending Friend Requests</h3>
+        <ul id="pendingRequests" style="list-style:none; padding-left:0;"></ul>
+      </div>
+      <div class="card">
+        <h3>Friends</h3>
+        <ul id="friendList" style="list-style:none; padding-left:0;"></ul>
+      </div>
+    </div>
+  `;
+  loadFriends();
+  loadPendingRequests();
+}
+
+// Improved Search users by name or email excluding self and existing friends
+let currentSearchTimeout = null;
+function searchUsers() {
+  const q = document.getElementById('searchFriendInput').value.trim().toLowerCase();
+  const currentUserId = auth.currentUser.uid;
+
+  if (currentSearchTimeout) clearTimeout(currentSearchTimeout);
+  if (!q) {
+    document.getElementById('searchResults').innerHTML = "";
+    return;
   }
 
-  // Search users by name or email excluding self and existing friends
-  let currentSearchTimeout = null;
-  function searchUsers() {
-    const q = document.getElementById('searchFriendInput').value.trim().toLowerCase();
-    const currentUserId = auth.currentUser.uid;
+  currentSearchTimeout = setTimeout(() => {
+    // Firestore does not support OR queries natively, so we do 2 queries and combine results.
 
-    if (currentSearchTimeout) clearTimeout(currentSearchTimeout);
-    if (!q) {
-      document.getElementById('searchResults').innerHTML = "";
-      return;
-    }
+    // 1) Search by name starting with query (case-insensitive via storing lowercase name)
+    const nameQuery = db.collection('users')
+      .orderBy('nameLower') // must store lowercase name in user doc (see note below)
+      .startAt(q)
+      .endAt(q + '\uf8ff')
+      .limit(20)
+      .get();
 
-    currentSearchTimeout = setTimeout(() => {
-      db.collection('users')
-        .orderBy('name')
-        .startAt(q)
-        .endAt(q + '\uf8ff')
-        .limit(20)
-        .get()
-        .then(snapshot => {
-          const results = [];
-          snapshot.forEach(doc => {
-            const user = doc.data();
-            if (doc.id === currentUserId) return; // exclude self
-            results.push({ id: doc.id, ...user });
-          });
+    // 2) Search by email starting with query
+    const emailQuery = db.collection('users')
+      .orderBy('emailLower') // must store lowercase email too
+      .startAt(q)
+      .endAt(q + '\uf8ff')
+      .limit(20)
+      .get();
 
-          // Filter out existing friends and pending friend requests
-          db.collection('users').doc(currentUserId).collection('friends').get()
-            .then(friendSnap => {
-              const friendIds = friendSnap.docs.map(d => d.id);
-              db.collection('friendRequests')
-                .where('from', '==', currentUserId)
-                .get()
-                .then(sentRequestsSnap => {
-                  const sentRequestToIds = sentRequestsSnap.docs.map(d => d.data().to);
-                  // Render filtered search results
-                  let html = "";
-                  results.forEach(user => {
-                    if (friendIds.includes(user.id)) return; // skip friends
-                    if (sentRequestToIds.includes(user.id)) {
-                      html += `<li>${user.name} (${user.email}) - Request sent <button onclick="cancelFriendRequest('${user.id}')">Cancel</button></li>`;
-                    } else {
-                      html += `<li>${user.name} (${user.email}) <button onclick="sendFriendRequest('${user.id}', '${user.name}')">Add Friend</button></li>`;
-                    }
-                  });
-                  document.getElementById('searchResults').innerHTML = html;
-                });
-            });
+    Promise.all([nameQuery, emailQuery]).then(results => {
+      // Combine and deduplicate users by id
+      let combinedUsersMap = {};
+      results.forEach(snapshot => {
+        snapshot.forEach(doc => {
+          combinedUsersMap[doc.id] = { id: doc.id, ...doc.data() };
         });
-    }, 500);
-  }
+      });
+      let combinedUsers = Object.values(combinedUsersMap);
+
+      // Filter out self
+      combinedUsers = combinedUsers.filter(u => u.id !== currentUserId);
+
+      // Now fetch current user's friends and pending sent requests to filter out
+      Promise.all([
+        db.collection('users').doc(currentUserId).collection('friends').get(),
+        db.collection('friendRequests').where('from', '==', currentUserId).where('status', '==', 'pending').get()
+      ]).then(([friendSnap, sentRequestsSnap]) => {
+        const friendIds = friendSnap.docs.map(d => d.id);
+        const sentRequestToIds = sentRequestsSnap.docs.map(d => d.data().to);
+
+        let html = "";
+        combinedUsers.forEach(user => {
+          if (friendIds.includes(user.id)) {
+            // Already friend - skip
+            return;
+          }
+          if (sentRequestToIds.includes(user.id)) {
+            // Request sent - show cancel option
+            html += `<li>${user.name} (${user.email}) - Request sent <button onclick="cancelFriendRequest('${user.id}')">Cancel</button></li>`;
+          } else {
+            html += `<li>${user.name} (${user.email}) <button onclick="sendFriendRequest('${user.id}', '${user.name}')">Add Friend</button></li>`;
+          }
+        });
+        document.getElementById('searchResults').innerHTML = html || "<li>No users found</li>";
+      });
+    }).catch(e => {
+      console.error(e);
+      document.getElementById('searchResults').innerHTML = "<li>Error searching users</li>";
+    });
+  }, 500);
+}
+
 
   // Send friend request
   function sendFriendRequest(toId, toName) {
