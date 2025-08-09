@@ -428,27 +428,57 @@ function searchUsers() {
 
 
   // Send friend request
-  function sendFriendRequest(toId, toName) {
-    const fromId = auth.currentUser.uid;
-    const fromName = "";
+ function sendFriendRequest(toId, toName) {
+  const currentUserId = auth.currentUser.uid;
+  if (toId === currentUserId) {
+    alert("You cannot send a friend request to yourself.");
+    return;
+  }
+  // Check if already friends or request sent
+  Promise.all([
+    db.collection('users').doc(currentUserId).collection('friends').doc(toId).get(),
+    db.collection('friendRequests')
+      .where('from', '==', currentUserId)
+      .where('to', '==', toId)
+      .where('status', '==', 'pending')
+      .get()
+  ]).then(([friendDoc, requestSnap]) => {
+    if (friendDoc.exists) {
+      alert("You are already friends.");
+      return;
+    }
+    if (!requestSnap.empty) {
+      alert("Friend request already sent.");
+      return;
+    }
 
-    db.collection('users').doc(fromId).get().then(doc => {
-      fromName = doc.data().name || "";
-      // Create friend request doc
+    // Get current user name
+    db.collection('users').doc(currentUserId).get().then(userDoc => {
+      if (!userDoc.exists) {
+        alert("User data not found.");
+        return;
+      }
+      const fromName = userDoc.data().name || "Unknown";
+      // Add friend request
       db.collection('friendRequests').add({
-        from: fromId,
-        fromName,
+        from: currentUserId,
+        fromName: fromName,
         to: toId,
-        toName,
-        status: 'pending',
+        toName: toName,
+        status: "pending",
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       }).then(() => {
-        alert('Friend request sent');
+        alert("Friend request sent!");
         searchUsers();
         loadPendingRequests();
-      }).catch(e => alert("Error sending friend request: "+e.message));
+      }).catch(e => {
+        alert("Error sending friend request: " + e.message);
+      });
     });
-  }
+  }).catch(e => {
+    alert("Error checking friend status: " + e.message);
+  });
+}
 
   // Cancel friend request sent
   function cancelFriendRequest(toId) {
