@@ -499,96 +499,101 @@ function searchUsers() {
   }
 
   // Load pending friend requests to current user (to accept or decline)
-  function loadPendingRequests() {
-    const currentUserId = auth.currentUser.uid;
-    db.collection('friendRequests')
-      .where('to', '==', currentUserId)
-      .where('status', '==', 'pending')
-      .orderBy('timestamp', 'desc')
-      .onSnapshot(snapshot => {
-        const list = document.getElementById('pendingRequests');
-        list.innerHTML = "";
-        if (snapshot.empty) {
-          list.innerHTML = "<li>No pending friend requests</li>";
-          return;
-        }
-        snapshot.forEach(doc => {
-          const data = doc.data();
+ function loadPendingRequests() {
+  const currentUserId = auth.currentUser.uid;
+  db.collection('friendRequests')
+    .where('to', '==', currentUserId)
+    .where('status', '==', 'pending')
+    .orderBy('timestamp', 'desc')
+    .onSnapshot(snapshot => {
+      const list = document.getElementById('pendingRequests');
+      if (!list) return;
+      list.innerHTML = "";
+      if (snapshot.empty) {
+        list.innerHTML = "<li>No pending friend requests</li>";
+        return;
+      }
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const li = document.createElement('li');
+        li.className = 'request-item';
+        li.innerHTML = `
+          <span><strong>${data.fromName}</strong> wants to be your friend</span>
+          <span>
+            <button onclick="acceptFriendRequest('${doc.id}', '${data.from}')">Accept</button>
+            <button onclick="declineFriendRequest('${doc.id}')">Decline</button>
+          </span>
+        `;
+        list.appendChild(li);
+      });
+    });
+}
+  // Accept friend request: add both users to friends subcollection, delete request
+  function acceptFriendRequest(requestId, friendId) {
+  const currentUserId = auth.currentUser.uid;
+  const batch = db.batch();
+
+  // Add friend for current user
+  const myFriendRef = db.collection('users').doc(currentUserId).collection('friends').doc(friendId);
+  batch.set(myFriendRef, { since: firebase.firestore.FieldValue.serverTimestamp() });
+
+  // Add current user to friend's friend list
+  const friendFriendRef = db.collection('users').doc(friendId).collection('friends').doc(currentUserId);
+  batch.set(friendFriendRef, { since: firebase.firestore.FieldValue.serverTimestamp() });
+
+  // Remove friend request
+  const requestRef = db.collection('friendRequests').doc(requestId);
+  batch.delete(requestRef);
+
+  batch.commit().then(() => {
+    alert("Friend request accepted");
+    loadPendingRequests();
+    loadFriends();
+  }).catch(e => {
+    alert("Error accepting friend request: " + e.message);
+  });
+}
+  // Decline friend request (just delete the request doc)
+ function declineFriendRequest(requestId) {
+  db.collection('friendRequests').doc(requestId).delete()
+    .then(() => {
+      alert("Friend request declined");
+      loadPendingRequests();
+    })
+    .catch(e => {
+      alert("Error declining friend request: " + e.message);
+    });
+}
+
+
+  // Load friend list
+  function loadFriends() {
+  const currentUserId = auth.currentUser.uid;
+  db.collection('users').doc(currentUserId).collection('friends')
+    .onSnapshot(snapshot => {
+      const list = document.getElementById('friendList');
+      if (!list) return;
+      list.innerHTML = "";
+      if (snapshot.empty) {
+        list.innerHTML = "<li>No friends yet</li>";
+        return;
+      }
+      snapshot.forEach(doc => {
+        const friendId = doc.id;
+        db.collection('users').doc(friendId).get().then(friendDoc => {
+          const friendData = friendDoc.data() || { name: "Unknown" };
           const li = document.createElement('li');
-          li.className = 'request-item';
+          li.className = 'friend-item';
           li.innerHTML = `
-            <span><strong>${data.fromName}</strong> wants to be your friend</span>
-            <span>
-              <button onclick="acceptFriendRequest('${doc.id}', '${data.from}')">Accept</button>
-              <button onclick="declineFriendRequest('${doc.id}')">Decline</button>
-            </span>
+            <span>${friendData.name}</span>
+            <button onclick="startChat('${friendId}', '${friendData.name}')">Chat</button>
+            <button onclick="removeFriend('${friendId}')">Remove</button>
           `;
           list.appendChild(li);
         });
       });
-  }
-
-  // Accept friend request: add both users to friends subcollection, delete request
-  function acceptFriendRequest(requestId, friendId) {
-    const currentUserId = auth.currentUser.uid;
-    const batch = db.batch();
-
-    // Add friend for current user
-    const myFriendRef = db.collection('users').doc(currentUserId).collection('friends').doc(friendId);
-    batch.set(myFriendRef, { since: firebase.firestore.FieldValue.serverTimestamp() });
-
-    // Add current user to friend's friend list
-    const friendFriendRef = db.collection('users').doc(friendId).collection('friends').doc(currentUserId);
-    batch.set(friendFriendRef, { since: firebase.firestore.FieldValue.serverTimestamp() });
-
-    // Remove friend request
-    const requestRef = db.collection('friendRequests').doc(requestId);
-    batch.delete(requestRef);
-
-    batch.commit().then(() => {
-      alert("Friend request accepted");
-      loadPendingRequests();
-      loadFriends();
     });
-  }
-
-  // Decline friend request (just delete the request doc)
-  function declineFriendRequest(requestId) {
-    db.collection('friendRequests').doc(requestId).delete().then(() => {
-      alert("Friend request declined");
-      loadPendingRequests();
-    });
-  }
-
-  // Load friend list
-  function loadFriends() {
-    const currentUserId = auth.currentUser.uid;
-    db.collection('users').doc(currentUserId).collection('friends')
-      .onSnapshot(snapshot => {
-        const list = document.getElementById('friendList');
-        if (!list) return;
-        list.innerHTML = "";
-        if (snapshot.empty) {
-          list.innerHTML = "<li>No friends yet</li>";
-          return;
-        }
-        snapshot.forEach(doc => {
-          const friendId = doc.id;
-          db.collection('users').doc(friendId).get().then(friendDoc => {
-            const friendData = friendDoc.data() || { name: "Unknown" };
-            const li = document.createElement('li');
-            li.className = 'friend-item';
-            li.innerHTML = `
-              <span>${friendData.name}</span>
-              <button onclick="startChat('${friendId}', '${friendData.name}')">Chat</button>
-              <button onclick="removeFriend('${friendId}')">Remove</button>
-            `;
-            list.appendChild(li);
-          });
-        });
-      });
-  }
-
+}
   // Remove friend
   function removeFriend(friendId) {
     const currentUserId = auth.currentUser.uid;
