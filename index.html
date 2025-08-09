@@ -6,137 +6,34 @@
 <title>Xinn Social</title>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 <style>
-  body, html {
-    margin:0; padding:0; height:100%; font-family: Arial, sans-serif; background:#f0f2f5;
-  }
-  header {
-    background:#2196F3; color:#fff; padding:10px; text-align:center; font-size:1.5em; font-weight:500;
-  }
-  .container {
-    padding:20px;
-    max-width: 600px;
-    margin: 0 auto 80px;
-  }
-  .card {
-    background:#fff; padding:15px; margin:10px 0; border-radius:8px;
-    box-shadow:0 2px 5px rgba(0,0,0,0.1);
-  }
+  body { font-family: Arial, sans-serif; margin:0; background:#f0f2f5; }
+  header { background:#2196F3; color:white; padding:10px; text-align:center; }
+  .container { padding:20px; }
+  .card { background:white; padding:15px; margin:10px 0; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
   input, textarea, button, select {
     width:100%; padding:10px; margin:5px 0; border:1px solid #ccc; border-radius:5px;
-    font-size: 1em;
-    box-sizing: border-box;
   }
-  button {
-    background:#2196F3; color:#fff; border:none; cursor:pointer;
-    font-weight: 600;
-    transition: background 0.3s;
-  }
-  button:hover {
-    background:#1976D2;
-  }
-  nav {
-    position: fixed; bottom:0; left:0; right:0; background:#fff;
-    display:flex; justify-content:space-around;
-    border-top:1px solid #ccc; padding:10px 0;
-    box-shadow: 0 -1px 4px rgba(0,0,0,0.1);
-    z-index: 100;
-  }
-  nav button {
-    background:none; color:#555; font-size: 24px;
-    border:none; outline:none; cursor:pointer;
-  }
-  nav button.active {
-    color:#2196F3; font-weight:bold;
-  }
-  ul {
-    list-style:none; padding:0; margin:0;
-  }
-  ul li {
-    padding: 8px 0; border-bottom: 1px solid #ddd;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  ul li:last-child {
-    border-bottom: none;
-  }
-  /* Chat styles */
-  .chat-container {
-    display: flex; flex-direction: column; height: 70vh;
-  }
-  #messages {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background: #fafafa;
-    margin-bottom: 10px;
-  }
-  .message {
-    max-width: 70%;
-    padding: 8px 12px;
-    margin-bottom: 8px;
-    border-radius: 18px;
-    font-size: 14px;
-    line-height: 1.3;
-    word-wrap: break-word;
-    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-  }
-  .message.me {
-    background: #DCF8C6;
-    align-self: flex-end;
-    border-bottom-right-radius: 2px;
-  }
-  .message.friend {
-    background: #fff;
-    align-self: flex-start;
-    border-bottom-left-radius: 2px;
-    border: 1px solid #ddd;
-  }
-  .message small {
-    display: block;
-    font-size: 10px;
-    color: gray;
-    margin-top: 2px;
-  }
-  .chat-input {
-    display: flex;
-    gap: 10px;
-  }
-  .chat-input textarea {
-    flex-grow: 1;
-    resize: none;
-    font-size: 14px;
-    padding: 10px;
-  }
-  .chat-input button {
-    flex-shrink: 0;
-    width: 70px;
-    font-weight: 700;
-  }
+  button { background:#2196F3; color:white; border:none; cursor:pointer; }
+  nav { position:fixed; bottom:0; left:0; right:0; background:white; display:flex; justify-content:space-around; border-top:1px solid #ccc; padding:10px 0; }
+  nav button { background:none; color:#555; font-size:24px; }
+  nav button.active { color:#2196F3; font-weight:bold; }
+  ul { list-style:none; padding-left:0; }
+  li { padding:8px 0; border-bottom:1px solid #ddd; }
+  li button { width:auto; padding:5px 10px; margin-left:10px; font-size:14px; }
 </style>
 </head>
 <body>
 
-<header>Xinn Social</header>
+<header><h2>Xinn Social</h2></header>
 
 <div id="app"></div>
 
 <nav id="navBar" style="display:none;">
-  <button id="navFeed" onclick="showPage('feed')" title="Feed">
-    <span class="material-icons">home</span>
-  </button>
-  <button id="navFriends" onclick="showPage('friends')" title="Friends">
-    <span class="material-icons">group</span>
-  </button>
-  <button id="navChat" onclick="showPage('chat')" title="Chat">
-    <span class="material-icons">chat</span>
-  </button>
-  <button id="navProfile" onclick="showPage('profile')" title="Profile">
-    <span class="material-icons">person</span>
-  </button>
-  <button id="navSettings" onclick="showPage('settings')" title="Settings">
-    <span class="material-icons">settings</span>
-  </button>
+  <button id="navFeed" onclick="showPage('feed')" title="Feed"><span class="material-icons">home</span></button>
+  <button id="navFriends" onclick="showPage('friends')" title="Friends"><span class="material-icons">group</span></button>
+  <button id="navChat" onclick="showPage('chat')" title="Chat"><span class="material-icons">chat</span></button>
+  <button id="navProfile" onclick="showPage('profile')" title="Profile"><span class="material-icons">person</span></button>
+  <button id="navSettings" onclick="showPage('settings')" title="Settings"><span class="material-icons">settings</span></button>
 </nav>
 
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -164,7 +61,7 @@ let currentChatFriendName = '';
 let unsubscribeChat = null;
 let searchTimeout = null;
 
-// --- LOGIN & REGISTER ---
+// --- AUTH & UI ---
 function renderLogin() {
   document.getElementById('app').innerHTML = `
     <div class="container card">
@@ -175,6 +72,7 @@ function renderLogin() {
       <p>Or <a href="#" onclick="renderRegister()">Register</a></p>
     </div>
   `;
+  document.getElementById('navBar').style.display = 'none';
 }
 
 function renderRegister() {
@@ -190,6 +88,7 @@ function renderRegister() {
       <p>Already have an account? <a href="#" onclick="renderLogin()">Login</a></p>
     </div>
   `;
+  document.getElementById('navBar').style.display = 'none';
 }
 
 function login() {
@@ -199,7 +98,8 @@ function login() {
     alert('Email must end with @xinn.lab');
     return;
   }
-  auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+  auth.signInWithEmailAndPassword(email, pass)
+    .catch(e => alert(e.message));
 }
 
 function register() {
@@ -208,24 +108,434 @@ function register() {
   const bio = document.getElementById('bio').value.trim();
   const email = document.getElementById('email').value.trim();
   const pass = document.getElementById('password').value.trim();
+
   if (!email.endsWith('@xinn.lab')) {
     alert('Email must end with @xinn.lab');
     return;
   }
+  if (!name) {
+    alert('Please enter your full name');
+    return;
+  }
+  
   auth.createUserWithEmailAndPassword(email, pass)
     .then(cred => {
-      return db.collection('users').doc(cred.user.uid).set({ 
-        name, 
-        age, 
-        bio, 
-        email, 
-        nameLower: name.toLowerCase() 
+      return db.collection('users').doc(cred.user.uid).set({
+        name,
+        age,
+        bio,
+        email,
+        nameLower: name.toLowerCase(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     })
     .catch(e => alert(e.message));
 }
 
-// --- FEED ---
+// --- FRIENDS ---
+
+// Render friend list and pending requests
+function renderFriends() {
+  const uid = auth.currentUser.uid;
+  document.getElementById('app').innerHTML = `
+    <div class="container">
+      <h3>Friends</h3>
+      <ul id="friendList"></ul>
+      <h3>Pending Friend Requests</h3>
+      <ul id="pendingRequests"></ul>
+      <h3>Search Users</h3>
+      <input id="searchFriendInput" placeholder="Search users by name..." oninput="searchUsers()" />
+      <ul id="searchResults"></ul>
+    </div>
+  `;
+
+  loadFriendList();
+  loadPendingRequests();
+  document.getElementById('searchResults').innerHTML = '';
+}
+
+// Load current friends
+function loadFriendList() {
+  const uid = auth.currentUser.uid;
+  const list = document.getElementById('friendList');
+  list.innerHTML = '<li>Loading friends...</li>';
+
+  db.collection('users').doc(uid).collection('friends').get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        list.innerHTML = '<li>No friends yet</li>';
+        return;
+      }
+      list.innerHTML = '';
+      snapshot.forEach(doc => {
+        const friendId = doc.id;
+        db.collection('users').doc(friendId).get()
+          .then(friendDoc => {
+            if (!friendDoc.exists) return;
+            const friendData = friendDoc.data();
+            const li = document.createElement('li');
+            li.textContent = friendData.name || 'Unknown';
+            li.style.cursor = 'pointer';
+            li.title = 'Click to chat';
+            li.onclick = () => openChat(friendId, friendData.name);
+            list.appendChild(li);
+          });
+      });
+    })
+    .catch(e => {
+      list.innerHTML = '<li>Error loading friends</li>';
+      console.error('Load friends error:', e);
+    });
+}
+
+// Load incoming friend requests (pending)
+function loadPendingRequests() {
+  const uid = auth.currentUser.uid;
+  const list = document.getElementById('pendingRequests');
+  list.innerHTML = '<li>Loading requests...</li>';
+
+  db.collection('users').doc(uid).collection('friendRequests')
+    .where('status', '==', 'pending')
+    .get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        list.innerHTML = '<li>No pending requests</li>';
+        return;
+      }
+      list.innerHTML = '';
+      snapshot.forEach(doc => {
+        const req = doc.data();
+        const li = document.createElement('li');
+        li.textContent = req.fromName || 'Unknown';
+        li.style.fontWeight = 'bold';
+
+        const acceptBtn = document.createElement('button');
+        acceptBtn.textContent = 'Accept';
+        acceptBtn.onclick = () => acceptFriendRequest(doc.id, req.from);
+
+        const declineBtn = document.createElement('button');
+        declineBtn.textContent = 'Decline';
+        declineBtn.onclick = () => declineFriendRequest(doc.id);
+
+        li.appendChild(acceptBtn);
+        li.appendChild(declineBtn);
+        list.appendChild(li);
+      });
+    })
+    .catch(e => {
+      list.innerHTML = '<li>Error loading requests</li>';
+      console.error('Load requests error:', e);
+    });
+}
+
+// Send friend request (creates doc in recipient's friendRequests subcollection)
+function sendFriendRequest(toId, toName) {
+  const fromId = auth.currentUser.uid;
+  const fromName = auth.currentUser.displayName || 'You';
+
+  // Prevent sending to self
+  if (fromId === toId) {
+    alert("You can't add yourself");
+    return;
+  }
+
+  // Add friend request doc to recipient
+  db.collection('users').doc(toId).collection('friendRequests').doc(fromId).set({
+    from: fromId,
+    fromName,
+    status: 'pending',
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    alert('Friend request sent to ' + toName);
+    searchUsers(); // refresh search results to update button state
+  }).catch(e => {
+    alert('Error sending friend request: ' + e.message);
+  });
+}
+
+// Cancel sent friend request (delete doc from recipient's friendRequests subcollection)
+function cancelFriendRequest(toId) {
+  const fromId = auth.currentUser.uid;
+
+  db.collection('users').doc(toId).collection('friendRequests').doc(fromId).delete()
+    .then(() => {
+      alert('Friend request canceled');
+      searchUsers(); // refresh search results
+    }).catch(e => {
+      alert('Error canceling request: ' + e.message);
+    });
+}
+
+// Accept friend request: add each other as friends & remove the request doc
+function acceptFriendRequest(requestId, fromId) {
+  const currentUserId = auth.currentUser.uid;
+
+  const batch = db.batch();
+
+  // Add to current user's friends subcollection
+  const myFriendRef = db.collection('users').doc(currentUserId).collection('friends').doc(fromId);
+  batch.set(myFriendRef, { since: firebase.firestore.FieldValue.serverTimestamp() });
+
+  // Add to friend's friends subcollection
+  const friendFriendRef = db.collection('users').doc(fromId).collection('friends').doc(currentUserId);
+  batch.set(friendFriendRef, { since: firebase.firestore.FieldValue.serverTimestamp() });
+
+  // Remove friend request doc
+  const reqRef = db.collection('users').doc(currentUserId).collection('friendRequests').doc(requestId);
+  batch.delete(reqRef);
+
+  batch.commit()
+    .then(() => {
+      alert('Friend request accepted!');
+      loadFriendList();
+      loadPendingRequests();
+    })
+    .catch(e => {
+      alert('Error accepting friend request: ' + e.message);
+    });
+}
+
+// Decline friend request (delete request doc)
+function declineFriendRequest(requestId) {
+  const currentUserId = auth.currentUser.uid;
+  db.collection('users').doc(currentUserId).collection('friendRequests').doc(requestId).delete()
+    .then(() => {
+      alert('Friend request declined');
+      loadPendingRequests();
+    }).catch(e => {
+      alert('Error declining request: ' + e.message);
+    });
+}
+
+// Search users excluding self, friends, and pending friend requests (sent or received)
+function searchUsers() {
+  const q = document.getElementById('searchFriendInput').value.trim().toLowerCase();
+  const currentUserId = auth.currentUser.uid;
+
+  if (searchTimeout) clearTimeout(searchTimeout);
+  if (!q) {
+    document.getElementById('searchResults').innerHTML = "";
+    return;
+  }
+
+  searchTimeout = setTimeout(() => {
+    db.collection('users')
+      .orderBy('nameLower')
+      .startAt(q)
+      .endAt(q + '\uf8ff')
+      .limit(20)
+      .get()
+      .then(snap => {
+        let users = [];
+        snap.forEach(doc => {
+          if (doc.id !== currentUserId) {
+            users.push({ id: doc.id, ...doc.data() });
+          }
+        });
+
+        if (users.length === 0) {
+          document.getElementById('searchResults').innerHTML = '<li>No users found</li>';
+          return;
+        }
+
+        Promise.all([
+          db.collection('users').doc(currentUserId).collection('friends').get(),
+          db.collection('users').doc(currentUserId).collection('friendRequests').get(),
+          db.collectionGroup('friendRequests').where('from', '==', currentUserId).where('status', '==', 'pending').get()
+        ]).then(([friendsSnap, incomingReqSnap, sentReqSnap]) => {
+          const friendIds = friendsSnap.docs.map(d => d.id);
+          const incomingReqIds = incomingReqSnap.docs.map(d => d.id);
+          const sentReqIds = sentReqSnap.docs.map(d => d.ref.parent.parent.id);
+
+          let html = "";
+          users.forEach(user => {
+            // Exclude friends
+            if (friendIds.includes(user.id)) return;
+
+            // Exclude if user has sent you a friend request (incoming)
+            if (incomingReqIds.includes(user.id)) {
+              html += `<li>${user.name} (${user.email || ''}) - Sent you a request</li>`;
+              return;
+            }
+
+            // Exclude if you have already sent a request to user
+            if (sentReqIds.includes(user.id)) {
+              html += `<li>${user.name} (${user.email || ''}) - Request sent 
+                <button onclick="cancelFriendRequest('${user.id}')">Cancel</button></li>`;
+              return;
+            }
+
+            // Show Add Friend button if none above
+            html += `<li>${user.name} (${user.email || ''}) 
+              <button onclick="sendFriendRequest('${user.id}', '${user.name}')">Add Friend</button></li>`;
+          });
+          document.getElementById('searchResults').innerHTML = html || "<li>No users found</li>";
+        });
+      }).catch(e => {
+        if (e.code === 'failed-precondition') {
+          alert('Firestore index missing for friend search. Please create the index in Firebase console.');
+        } else {
+          alert('Error searching users: ' + e.message);
+        }
+        document.getElementById('searchResults').innerHTML = '<li>Error searching users</li>';
+      });
+  }, 500);
+}
+
+// --- CHAT ---
+// Chat system simplified for friends only
+function renderChat() {
+  if (!currentChatFriendId) {
+    document.getElementById('app').innerHTML = `
+      <div class="container card">
+        <h3>Select a friend to chat from Friends tab</h3>
+      </div>
+    `;
+    return;
+  }
+
+  document.getElementById('app').innerHTML = `
+    <div class="container chat-container">
+      <h3>Chat with ${currentChatFriendName}</h3>
+      <div id="messages" style="max-height:300px; overflow-y:auto; border:1px solid #ccc; padding:10px; border-radius:8px; background:#fff;"></div>
+      <div style="display:flex; margin-top:10px;">
+        <textarea id="messageInput" rows="2" placeholder="Type a message" style="flex:1; resize:none; padding:10px; border-radius:8px; border:1px solid #ccc;"></textarea>
+        <button onclick="sendMessage()" style="margin-left:10px; padding:10px 20px;">Send</button>
+      </div>
+    </div>
+  `;
+
+  loadChatMessages(currentChatFriendId);
+}
+
+function openChat(friendId, friendName) {
+  currentChatFriendId = friendId;
+  currentChatFriendName = friendName;
+  if (unsubscribeChat) unsubscribeChat();
+  showPage('chat');
+}
+
+function loadChatMessages(friendId) {
+  const currentUserId = auth.currentUser.uid;
+  const chatId = getChatId(currentUserId, friendId);
+  const messagesRef = db.collection('chats').doc(chatId).collection('messages').orderBy('timestamp');
+
+  if (unsubscribeChat) unsubscribeChat();
+
+  unsubscribeChat = messagesRef.onSnapshot(snapshot => {
+    const messagesDiv = document.getElementById('messages');
+    messagesDiv.innerHTML = "";
+    snapshot.forEach(doc => {
+      const msg = doc.data();
+      const div = document.createElement('div');
+      div.style.margin = '8px 0';
+      div.style.maxWidth = '70%';
+      div.style.padding = '8px 12px';
+      div.style.borderRadius = '20px';
+      div.style.clear = 'both';
+      div.style.wordWrap = 'break-word';
+      div.style.fontSize = '14px';
+      if (msg.sender === currentUserId) {
+        div.style.backgroundColor = '#DCF8C6';
+        div.style.float = 'right';
+        div.style.textAlign = 'right';
+      } else {
+        div.style.backgroundColor = '#fff';
+        div.style.border = '1px solid #ccc';
+        div.style.float = 'left';
+        div.style.textAlign = 'left';
+      }
+      div.textContent = msg.text;
+      messagesDiv.appendChild(div);
+    });
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+}
+
+function sendMessage() {
+  const currentUserId = auth.currentUser.uid;
+  const friendId = currentChatFriendId;
+  if (!friendId) return;
+
+  const text = document.getElementById('messageInput').value.trim();
+  if (!text) return;
+
+  const chatId = getChatId(currentUserId, friendId);
+
+  db.collection('chats').doc(chatId).collection('messages').add({
+    sender: currentUserId,
+    text,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    document.getElementById('messageInput').value = '';
+  }).catch(e => {
+    alert('Error sending message: ' + e.message);
+  });
+}
+
+function getChatId(uid1, uid2) {
+  return uid1 < uid2 ? uid1 + '_' + uid2 : uid2 + '_' + uid1;
+}
+
+// --- PROFILE ---
+function renderProfile() {
+  const uid = auth.currentUser.uid;
+  db.collection('users').doc(uid).get()
+    .then(doc => {
+      const u = doc.data();
+      document.getElementById('app').innerHTML = `
+        <div class="container">
+          <div class="card">
+            <h3>${u.name}</h3>
+            <p>Age: ${u.age || '-'}</p>
+            <p>Bio: ${u.bio || '-'}</p>
+            <button onclick="editProfile()">Edit Profile</button>
+          </div>
+        </div>
+      `;
+    }).catch(e => {
+      alert('Error loading profile: ' + e.message);
+    });
+}
+
+function editProfile() {
+  const uid = auth.currentUser.uid;
+  db.collection('users').doc(uid).get()
+    .then(doc => {
+      const u = doc.data();
+      document.getElementById('app').innerHTML = `
+        <div class="container card">
+          <input id="name" value="${u.name || ''}" placeholder="Full Name" />
+          <input id="age" value="${u.age || ''}" placeholder="Age" />
+          <textarea id="bio" placeholder="Bio">${u.bio || ''}</textarea>
+          <button onclick="saveProfile()">Save</button>
+        </div>
+      `;
+    });
+}
+
+function saveProfile() {
+  const uid = auth.currentUser.uid;
+  const name = document.getElementById('name').value.trim();
+  const age = document.getElementById('age').value.trim();
+  const bio = document.getElementById('bio').value.trim();
+  if (!name) {
+    alert('Name cannot be empty');
+    return;
+  }
+  db.collection('users').doc(uid).update({
+    name,
+    age,
+    bio,
+    nameLower: name.toLowerCase()
+  }).then(() => {
+    renderProfile();
+  }).catch(e => {
+    alert('Error saving profile: ' + e.message);
+  });
+}
+
+// --- FEED --- (basic feed for demo)
 function renderFeed() {
   document.getElementById('app').innerHTML = `
     <div class="container">
@@ -302,368 +612,6 @@ function toggleLike(postId) {
   });
 }
 
-// --- FRIENDS ---
-function renderFriends() {
-  document.getElementById('app').innerHTML = `
-    <div class="container card">
-      <h3>Search Users</h3>
-      <input id="searchFriendInput" type="text" placeholder="Search by name" oninput="searchUsers()" autocomplete="off" />
-      <ul id="searchResults"></ul>
-      <h3>Pending Friend Requests</h3>
-      <ul id="pendingRequests"></ul>
-      <h3>Your Friends</h3>
-      <ul id="friendList"></ul>
-    </div>
-  `;
-  loadPendingRequests();
-  loadFriends();
-  searchUsers();
-}
-
-function searchUsers() {
-  const q = document.getElementById('searchFriendInput').value.trim().toLowerCase();
-  const currentUserId = auth.currentUser.uid;
-
-  if (searchTimeout) clearTimeout(searchTimeout);
-  if (!q) {
-    document.getElementById('searchResults').innerHTML = "";
-    return;
-  }
-  searchTimeout = setTimeout(() => {
-    db.collection('users')
-      .orderBy('nameLower')
-      .startAt(q)
-      .endAt(q + '\uf8ff')
-      .limit(20)
-      .get()
-      .then(snap => {
-        let users = [];
-        snap.forEach(doc => {
-          if (doc.id !== currentUserId) {
-            users.push({ id: doc.id, ...doc.data() });
-          }
-        });
-
-        if (users.length === 0) {
-          document.getElementById('searchResults').innerHTML = '<li>No users found</li>';
-          return;
-        }
-
-        Promise.all([
-          db.collection('users').doc(currentUserId).collection('friends').get(),
-          db.collection('friendRequests').where('from', '==', currentUserId).where('status', '==', 'pending').get()
-        ]).then(([friendsSnap, sentReqSnap]) => {
-          const friendIds = friendsSnap.docs.map(d => d.id);
-          const sentReqIds = sentReqSnap.docs.map(d => d.data().to);
-
-          let html = "";
-          users.forEach(user => {
-            if (friendIds.includes(user.id)) {
-              // Already friends, skip
-              return;
-            }
-            if (sentReqIds.includes(user.id)) {
-              html += `<li>${user.name} (${user.email || ''}) - Request sent 
-                <button onclick="cancelFriendRequest('${user.id}')">Cancel</button></li>`;
-            } else {
-              html += `<li>${user.name} (${user.email || ''}) 
-                <button onclick="sendFriendRequest('${user.id}', '${user.name}')">Add Friend</button></li>`;
-            }
-          });
-          document.getElementById('searchResults').innerHTML = html || "<li>No users found</li>";
-        });
-      }).catch(e => {
-        if (e.code === 'failed-precondition') {
-          alert('Firestore index missing for friend search. Please create the index in Firebase console.');
-        } else {
-          alert('Error searching users: ' + e.message);
-        }
-        document.getElementById('searchResults').innerHTML = '<li>Error searching users</li>';
-      });
-  }, 500);
-}
-
-function sendFriendRequest(toId, toName) {
-  const currentUserId = auth.currentUser.uid;
-  db.collection('users').doc(currentUserId).get().then(userDoc => {
-    if (!userDoc.exists) {
-      alert("User data not found.");
-      return;
-    }
-    const fromName = userDoc.data().name || "Unknown";
-    db.collection('friendRequests').add({
-      from: currentUserId,
-      fromName,
-      to: toId,
-      toName,
-      status: "pending",
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-      alert("Friend request sent!");
-      searchUsers();
-      loadPendingRequests();
-    }).catch(e => {
-      alert("Error sending friend request: " + e.message);
-    });
-  });
-}
-
-function cancelFriendRequest(toId) {
-  const currentUserId = auth.currentUser.uid;
-  db.collection('friendRequests')
-    .where('from', '==', currentUserId)
-    .where('to', '==', toId)
-    .where('status', '==', 'pending')
-    .get()
-    .then(snap => {
-      if (snap.empty) {
-        alert("No friend request to cancel.");
-        return;
-      }
-      snap.forEach(doc => {
-        doc.ref.delete();
-      });
-      alert("Friend request cancelled.");
-      searchUsers();
-      loadPendingRequests();
-    });
-}
-
-function loadPendingRequests() {
-  const currentUserId = auth.currentUser.uid;
-  db.collection('friendRequests')
-    .where('to', '==', currentUserId)
-    .where('status', '==', 'pending')
-    .orderBy('timestamp', 'desc')
-    .onSnapshot(snapshot => {
-      const list = document.getElementById('pendingRequests');
-      if (!list) return;
-      list.innerHTML = "";
-      if (snapshot.empty) {
-        list.innerHTML = "<li>No pending friend requests</li>";
-        return;
-      }
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const li = document.createElement('li');
-        li.className = 'request-item';
-        li.innerHTML = `
-          <span><strong>${data.fromName}</strong> wants to be your friend</span>
-          <span>
-            <button onclick="acceptFriendRequest('${doc.id}', '${data.from}')">Accept</button>
-            <button onclick="declineFriendRequest('${doc.id}')">Decline</button>
-          </span>
-        `;
-        list.appendChild(li);
-      });
-    });
-}
-
-function acceptFriendRequest(requestId, friendId) {
-  const currentUserId = auth.currentUser.uid;
-  const batch = db.batch();
-
-  const myFriendRef = db.collection('users').doc(currentUserId).collection('friends').doc(friendId);
-  batch.set(myFriendRef, { since: firebase.firestore.FieldValue.serverTimestamp() });
-
-  const friendFriendRef = db.collection('users').doc(friendId).collection('friends').doc(currentUserId);
-  batch.set(friendFriendRef, { since: firebase.firestore.FieldValue.serverTimestamp() });
-
-  const requestRef = db.collection('friendRequests').doc(requestId);
-  batch.delete(requestRef);
-
-  batch.commit().then(() => {
-    alert("Friend request accepted");
-    loadPendingRequests();
-    loadFriends();
-  }).catch(e => {
-    alert("Error accepting friend request: " + e.message);
-  });
-}
-
-function declineFriendRequest(requestId) {
-  db.collection('friendRequests').doc(requestId).delete()
-    .then(() => {
-      alert("Friend request declined");
-      loadPendingRequests();
-    })
-    .catch(e => {
-      alert("Error declining friend request: " + e.message);
-    });
-}
-
-function loadFriends() {
-  const currentUserId = auth.currentUser.uid;
-  db.collection('users').doc(currentUserId).collection('friends')
-    .onSnapshot(snapshot => {
-      const list = document.getElementById('friendList');
-      if (!list) return;
-      list.innerHTML = "";
-      if (snapshot.empty) {
-        list.innerHTML = "<li>No friends yet</li>";
-        return;
-      }
-      snapshot.forEach(doc => {
-        const friendId = doc.id;
-        db.collection('users').doc(friendId).get().then(friendDoc => {
-          const friendData = friendDoc.data();
-          if (!friendData) return;
-          const li = document.createElement('li');
-          li.textContent = friendData.name || "Unknown";
-          li.style.cursor = 'pointer';
-          li.title = "Click to chat";
-          li.onclick = () => openChat(friendId, friendData.name);
-          list.appendChild(li);
-        });
-      });
-    });
-}
-
-// --- CHAT ---
-function renderChat() {
-  if (!currentChatFriendId) {
-    document.getElementById('app').innerHTML = `
-      <div class="container card">
-        <h3>Select a friend to chat from Friends tab</h3>
-      </div>
-    `;
-    return;
-  }
-
-  document.getElementById('app').innerHTML = `
-    <div class="container chat-container">
-      <h3>Chat with ${currentChatFriendName}</h3>
-      <div id="messages"></div>
-      <div class="chat-input">
-        <textarea id="messageInput" rows="2" placeholder="Type a message"></textarea>
-        <button onclick="sendMessage()">Send</button>
-      </div>
-    </div>
-  `;
-
-  loadChatMessages(currentChatFriendId);
-}
-
-function openChat(friendId, friendName) {
-  currentChatFriendId = friendId;
-  currentChatFriendName = friendName;
-  if (unsubscribeChat) unsubscribeChat();
-  showPage('chat');
-}
-
-function loadChatMessages(friendId) {
-  const currentUserId = auth.currentUser.uid;
-  const chatId = getChatId(currentUserId, friendId);
-  const messagesRef = db.collection('chats').doc(chatId).collection('messages').orderBy('timestamp');
-
-  if (unsubscribeChat) unsubscribeChat();
-
-  unsubscribeChat = messagesRef.onSnapshot(snapshot => {
-    const messagesDiv = document.getElementById('messages');
-    messagesDiv.innerHTML = "";
-    snapshot.forEach(doc => {
-      const msg = doc.data();
-      const div = document.createElement('div');
-      div.className = 'message ' + (msg.sender === currentUserId ? 'me' : 'friend');
-      div.textContent = msg.text;
-      const time = msg.timestamp ? msg.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-      const timeEl = document.createElement('small');
-      timeEl.textContent = time;
-      div.appendChild(timeEl);
-      messagesDiv.appendChild(div);
-    });
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  });
-}
-
-function sendMessage() {
-  const input = document.getElementById('messageInput');
-  const text = input.value.trim();
-  if (!text || !currentChatFriendId) return;
-
-  const currentUserId = auth.currentUser.uid;
-  const chatId = getChatId(currentUserId, currentChatFriendId);
-
-  db.collection('chats').doc(chatId).collection('messages').add({
-    sender: currentUserId,
-    text,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  input.value = '';
-}
-
-function getChatId(uid1, uid2) {
-  return [uid1, uid2].sort().join('_');
-}
-
-// --- PROFILE ---
-function renderProfile() {
-  db.collection('users').doc(auth.currentUser.uid).get().then(doc => {
-    if (!doc.exists) {
-      alert('Profile not found!');
-      renderFeed();
-      return;
-    }
-    const u = doc.data();
-    document.getElementById('app').innerHTML = `
-      <div class="container card">
-        <h3>${u.name || ''}</h3>
-        <p>Age: ${u.age || ''}</p>
-        <p>Bio: ${u.bio || ''}</p>
-        <button onclick="editProfile()">Edit Profile</button>
-      </div>
-    `;
-  }).catch(e => {
-    alert('Error loading profile: ' + e.message);
-    renderFeed();
-  });
-}
-
-function editProfile() {
-  db.collection('users').doc(auth.currentUser.uid).get().then(doc => {
-    if (!doc.exists) {
-      alert('Profile not found!');
-      renderFeed();
-      return;
-    }
-    const u = doc.data();
-    document.getElementById('app').innerHTML = `
-      <div class="container card">
-        <input id="name" value="${u.name || ''}" placeholder="Name" />
-        <input id="age" value="${u.age || ''}" placeholder="Age" type="number" />
-        <textarea id="bio" placeholder="Bio">${u.bio || ''}</textarea>
-        <button onclick="saveProfile()">Save</button>
-      </div>
-    `;
-  }).catch(e => {
-    alert('Error loading profile for edit: ' + e.message);
-    renderFeed();
-  });
-}
-
-function saveProfile() {
-  const name = document.getElementById('name').value.trim();
-  const age = document.getElementById('age').value.trim();
-  const bio = document.getElementById('bio').value.trim();
-
-  if (!name) {
-    alert('Name cannot be empty');
-    return;
-  }
-
-  db.collection('users').doc(auth.currentUser.uid).update({
-    name,
-    age,
-    bio,
-    nameLower: name.toLowerCase()
-  }).then(() => {
-    alert('Profile updated');
-    renderProfile();
-  }).catch(e => {
-    alert('Error updating profile: ' + e.message);
-  });
-}
-
 // --- SETTINGS ---
 function renderSettings() {
   document.getElementById('app').innerHTML = `
@@ -674,40 +622,43 @@ function renderSettings() {
 }
 
 // --- NAVIGATION ---
-function setActiveNav(page) {
-  const buttons = ['navFeed', 'navFriends', 'navChat', 'navProfile', 'navSettings'];
-  buttons.forEach(id => {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    btn.classList.toggle('active', id === 'nav' + capitalize(page));
-  });
-}
-
-function capitalize(s) {
-  if (!s) return '';
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
 function showPage(page) {
-  setActiveNav(page);
-  switch(page) {
-    case 'feed': renderFeed(); break;
-    case 'profile': renderProfile(); break;
-    case 'friends': renderFriends(); break;
-    case 'chat': renderChat(); break;
-    case 'settings': renderSettings(); break;
-    default: renderFeed();
-  }
+  // Update active nav button
+  ['navFeed','navFriends','navChat','navProfile','navSettings'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+  if (page === 'feed') document.getElementById('navFeed').classList.add('active');
+  else if (page === 'friends') document.getElementById('navFriends').classList.add('active');
+  else if (page === 'chat') document.getElementById('navChat').classList.add('active');
+  else if (page === 'profile') document.getElementById('navProfile').classList.add('active');
+  else if (page === 'settings') document.getElementById('navSettings').classList.add('active');
+
+  if (page === 'feed') renderFeed();
+  if (page === 'profile') renderProfile();
+  if (page === 'friends') renderFriends();
+  if (page === 'chat') renderChat();
+  if (page === 'settings') renderSettings();
 }
 
+// --- AUTH STATE ---
 auth.onAuthStateChanged(user => {
   if (user) {
+    // Ensure displayName for friend request names
+    if (!user.displayName) {
+      db.collection('users').doc(user.uid).get().then(doc => {
+        const u = doc.data();
+        if (u && u.name) {
+          user.updateProfile({ displayName: u.name });
+        }
+      });
+    }
     showPage('feed');
     document.getElementById('navBar').style.display = 'flex';
   } else {
-    if (unsubscribeChat) unsubscribeChat();
-    document.getElementById('navBar').style.display = 'none';
     renderLogin();
+    document.getElementById('navBar').style.display = 'none';
+    currentChatFriendId = null;
+    currentChatFriendName = '';
   }
 });
 </script>
