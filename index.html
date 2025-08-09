@@ -600,31 +600,76 @@ function loadPosts() {
   });
 }
 // --- Visit other user's profile (read-only) ---
-function visitProfile(uid) {
-  db.collection('users').doc(uid).get()
-    .then(doc => {
-      if (!doc.exists) {
-        alert('User profile not found');
-        return;
-      }
-      const u = doc.data();
-      const currentUserId = auth.currentUser.uid;
-      const isCurrentUser = (uid === currentUserId);
+async function visitProfile(uid) {
+  try {
+    const doc = await db.collection('users').doc(uid).get();
+    if (!doc.exists) {
+      alert('User profile not found');
+      return;
+    }
+    const u = doc.data();
+    const currentUserId = auth.currentUser.uid;
+    const isCurrentUser = (uid === currentUserId);
 
+    if (isCurrentUser) {
+      // Show editable profile
       document.getElementById('app').innerHTML = `
         <div class="container card">
           <button onclick="showPage('feed')" style="margin-bottom:10px;">&larr; Back to Feed</button>
           <h3>${u.name}</h3>
           <p>Age: ${u.age || '-'}</p>
           <p>Bio: ${u.bio || '-'}</p>
-          ${isCurrentUser ? '<button onclick="editProfile()">Edit Profile</button>' : ''}
+          <button onclick="editProfile()">Edit Profile</button>
         </div>
       `;
-    }).catch(e => {
-      alert('Error loading profile: ' + e.message);
-    });
-}
+      return;
+    }
 
+    // Check friend request & friendship status
+    const friendsRef = db.collection('users').doc(currentUserId).collection('friends').doc(uid);
+    const sentRequestRef = db.collection('users').doc(uid).collection('friendRequests').doc(currentUserId);
+    const receivedRequestRef = db.collection('users').doc(currentUserId).collection('friendRequests').doc(uid);
+
+    const [friendDoc, sentReqDoc, receivedReqDoc] = await Promise.all([
+      friendsRef.get(),
+      sentRequestRef.get(),
+      receivedRequestRef.get()
+    ]);
+
+    let actionButtons = '';
+
+    if (friendDoc.exists) {
+      actionButtons = `<p style="color:green; font-weight:bold;">You and ${u.name} are friends.</p>`;
+    } else if (receivedReqDoc.exists) {
+      // Current user received a friend request from viewed user => can Accept or Decline
+      actionButtons = `
+        <button onclick="acceptFriendRequest('${uid}')">Accept Friend Request</button>
+        <button onclick="declineFriendRequest('${uid}')">Decline</button>
+      `;
+    } else if (sentReqDoc.exists) {
+      // Current user already sent a friend request to viewed user => can Cancel
+      actionButtons = `
+        <button onclick="cancelFriendRequest('${uid}')">Cancel Friend Request</button>
+      `;
+    } else {
+      // No relation => can send friend request
+      actionButtons = `<button onclick="sendFriendRequest('${uid}')">Send Friend Request</button>`;
+    }
+
+    document.getElementById('app').innerHTML = `
+      <div class="container card">
+        <button onclick="showPage('feed')" style="margin-bottom:10px;">&larr; Back to Feed</button>
+        <h3>${u.name}</h3>
+        <p>Age: ${u.age || '-'}</p>
+        <p>Bio: ${u.bio || '-'}</p>
+        <div>${actionButtons}</div>
+      </div>
+    `;
+
+  } catch (e) {
+    alert('Error loading profile: ' + e.message);
+  }
+}
 function toggleLike(postId) {
   const ref = db.collection('posts').doc(postId);
   ref.get().then(doc => {
