@@ -731,53 +731,85 @@ function liveFriendsListener() {
 }
 
 // Accept friend request: mark request accepted and update friends arrays
+// ACCEPT friend request
 function acceptFriendRequest(requestId, fromUid) {
   const uid = getCurrentUid();
-  if (!uid) return alert('Not logged in');
+  if (!uid) return;
 
   const batch = db.batch();
-  const reqRef = db.collection('friendRequests').doc(requestId);
-  batch.update(reqRef, { status: 'accepted' });
-
   const myFriendsRef = db.collection('friends').doc(uid);
   const theirFriendsRef = db.collection('friends').doc(fromUid);
 
+  // Add each other to friends list
   batch.set(myFriendsRef, { friends: firebase.firestore.FieldValue.arrayUnion(fromUid) }, { merge: true });
   batch.set(theirFriendsRef, { friends: firebase.firestore.FieldValue.arrayUnion(uid) }, { merge: true });
 
-  batch.commit().then(() => {
-    // UI updates handled by onSnapshot listeners
-  }).catch(e => alert('Error accepting request: ' + e.message));
+  // Delete the request
+  batch.delete(db.collection('friendRequests').doc(requestId));
+
+  batch.commit().catch(e => alert("Error accepting request: " + e.message));
 }
 
-// Decline (set status declined)
+// DECLINE friend request
 function declineFriendRequest(requestId) {
-  const uid = getCurrentUid();
-  if (!uid) return alert('Not logged in');
-
-  db.collection('friendRequests').doc(requestId).update({ status: 'declined' })
-    .then(() => {
-      // onSnapshot will update UI
-    })
-    .catch(e => alert('Error declining request: ' + e.message));
+  db.collection('friendRequests').doc(requestId).delete()
+    .catch(e => alert("Error declining request: " + e.message));
 }
 
-// Unfriend: remove from both users' friend arrays
-function unfriend(friendUid) {
+// LIVE friends listener
+function liveFriendsListener() {
   const uid = getCurrentUid();
-  if (!uid) return alert('Not logged in');
+  if (!uid) return;
+  if (friendsUnsub) friendsUnsub();
+
+  const friendListDiv = document.getElementById('friendList');
+
+  friendsUnsub = db.collection('friends').doc(uid)
+    .onSnapshot(docSnap => {
+      const data = docSnap.exists ? docSnap.data() : { friends: [] };
+      const friendsArr = data.friends || [];
+      if (friendsArr.length === 0) {
+        friendListDiv.innerHTML = '<p>No friends yet.</p>';
+        return;
+      }
+
+      let html = '';
+      const promises = friendsArr.map(fid =>
+        db.collection('users').doc(fid).get().then(uDoc => {
+          const u = uDoc.exists ? uDoc.data() : { name: 'Unknown' };
+          html += `
+            <div class="friend-item">
+              <span>${escapeHtml(u.name)}</span>
+              <button onclick="removeFriend('${fid}')">Remove</button>
+            </div>
+          `;
+        })
+      );
+
+      Promise.all(promises).then(() => {
+        friendListDiv.innerHTML = html;
+      });
+    }, err => {
+      console.error('friends onSnapshot error:', err);
+    });
+}
+
+// REMOVE friend
+function removeFriend(friendUid) {
+  const uid = getCurrentUid();
+  if (!uid) return;
 
   const batch = db.batch();
-  const myFriendsRef = db.collection('friends').doc(uid);
-  const theirFriendsRef = db.collection('friends').doc(friendUid);
+  batch.update(db.collection('friends').doc(uid), {
+    friends: firebase.firestore.FieldValue.arrayRemove(friendUid)
+  });
+  batch.update(db.collection('friends').doc(friendUid), {
+    friends: firebase.firestore.FieldValue.arrayRemove(uid)
+  });
 
-  batch.update(myFriendsRef, { friends: firebase.firestore.FieldValue.arrayRemove(friendUid) });
-  batch.update(theirFriendsRef, { friends: firebase.firestore.FieldValue.arrayRemove(uid) });
-
-  batch.commit().then(() => {
-    // UI updated by onSnapshot listener
-  }).catch(e => alert('Error unfriending: ' + e.message));
+  batch.commit().catch(e => alert("Error removing friend: " + e.message));
 }
+
 
 // ==== CHAT ====
 // (kept intact — unchanged logic)
