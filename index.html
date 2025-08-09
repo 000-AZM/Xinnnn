@@ -573,18 +573,20 @@ function loadPosts() {
           const user = userDoc.data() || { name: "Unknown" };
           const time = p.timestamp ? p.timestamp.toDate().toLocaleString() : "Just now";
 
+          // Make user name clickable to visit profile
           html += `
             <div class="card" style="padding: 12px;">
               <div style="display:flex;align-items:center;margin-bottom:8px;">
                 <span class="material-icons" style="font-size:36px;color:#2196F3;margin-right:10px;">account_circle</span>
                 <div>
-                  <strong>${user.name}</strong><br>
+                  <strong style="cursor:pointer; color:#2196F3;" onclick="visitProfile('${p.uid}')">${user.name}</strong><br>
                   <small style="color:gray;">${time}</small>
                 </div>
               </div>
               <div style="margin:10px 0;font-size:15px;">${p.content}</div>
               <hr style="margin:8px 0;">
-              <button onclick="toggleLike('${doc.id}')" style="background:none;color:#2196F3;border:none;cursor:pointer;">
+              <button onclick="toggleLike('${doc.id}')"
+                style="background:none;color:#2196F3;border:none;cursor:pointer;">
                 👍 Like (${p.likes.length})
               </button>
             </div>`;
@@ -596,6 +598,31 @@ function loadPosts() {
       document.getElementById('feedPosts').innerHTML = html;
     });
   });
+}
+// --- Visit other user's profile (read-only) ---
+function visitProfile(uid) {
+  db.collection('users').doc(uid).get()
+    .then(doc => {
+      if (!doc.exists) {
+        alert('User profile not found');
+        return;
+      }
+      const u = doc.data();
+      const currentUserId = auth.currentUser.uid;
+      const isCurrentUser = (uid === currentUserId);
+
+      document.getElementById('app').innerHTML = `
+        <div class="container card">
+          <button onclick="showPage('feed')" style="margin-bottom:10px;">&larr; Back to Feed</button>
+          <h3>${u.name}</h3>
+          <p>Age: ${u.age || '-'}</p>
+          <p>Bio: ${u.bio || '-'}</p>
+          ${isCurrentUser ? '<button onclick="editProfile()">Edit Profile</button>' : ''}
+        </div>
+      `;
+    }).catch(e => {
+      alert('Error loading profile: ' + e.message);
+    });
 }
 
 function toggleLike(postId) {
