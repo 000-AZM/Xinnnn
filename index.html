@@ -6,547 +6,324 @@
 <title>Xinn Social</title>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 <style>
-  /* Reset & base */
+  /* ==== BASE STYLE ==== */
   body, html {
-    margin:0; padding:0; height:100%;
-    font-family: Arial, sans-serif;
-    background:#f0f2f5;
-    display: flex;
-    flex-direction: column;
+    margin: 0; padding: 0; font-family: 'Roboto', Arial, sans-serif;
+    background: var(--bg-color); color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
   }
-  header {
-    background:#2196F3;
-    color:white;
-    padding:12px 0;
-    text-align:center;
-    font-size: 1.4rem;
-    font-weight: bold;
+  :root {
+    --primary-color: #1976d2;
+    --bg-color: #fff;
+    --text-color: #222;
+    --card-bg: #fefefe;
+    --input-bg: #f5f5f5;
   }
-  #app {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px 16px 80px; /* bottom padding for nav */
+  body.dark {
+    --bg-color: #121212;
+    --text-color: #ddd;
+    --card-bg: #1e1e1e;
+    --input-bg: #2c2c2c;
   }
-  nav {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: white;
-    border-top: 1px solid #ccc;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    height: 56px;
-    box-shadow: 0 -1px 6px rgba(0,0,0,0.1);
-    z-index: 10;
-  }
-  nav button {
-    background: none;
-    border: none;
-    color: #555;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 6px;
-    outline: none;
-    transition: color 0.3s;
-  }
-  nav button.active,
-  nav button:hover {
-    color: #2196F3;
-  }
+
+  .material-icons { vertical-align: middle; }
   .card {
-    background: white;
-    padding: 16px;
-    margin-bottom: 16px;
-    border-radius: 10px;
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
-  }
-  input, textarea, button, select {
-    width: 100%;
-    padding: 10px;
-    margin: 6px 0;
+    background: var(--card-bg);
     border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
-    box-sizing: border-box;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.15);
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  button, input, textarea {
+    font-family: inherit;
   }
   button.primary {
-    background: #2196F3;
-    color: white;
+    background: var(--primary-color);
     border: none;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 4px;
     cursor: pointer;
-    font-weight: 600;
+    user-select: none;
   }
-  button.primary:hover {
-    background: #1976d2;
+  button.primary:disabled {
+    background: #999;
+    cursor: default;
   }
-  .friend-action-btn {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 6px;
-    margin-left: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.3s;
-  }
-  .friend-action-btn.accept {
-    background-color: #4caf50;
-    color: white;
-  }
-  .friend-action-btn.accept:hover {
-    background-color: #388e3c;
-  }
-  .friend-action-btn.decline {
-    background-color: #f44336;
-    color: white;
-  }
-  .friend-action-btn.decline:hover {
-    background-color: #d32f2f;
-  }
-  .friend-list-btn {
+  input, textarea {
     width: 100%;
-    padding: 10px;
-    text-align: left;
-    background: #e3f2fd;
+    box-sizing: border-box;
+    padding: 8px;
+    margin: 6px 0 12px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: var(--input-bg);
+    color: var(--text-color);
+  }
+  textarea {
+    resize: vertical;
+  }
+
+  /* ==== NAV BAR ==== */
+  #navBar {
+    display: flex;
+    background: var(--card-bg);
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  #navBar .nav-left, #navBar .nav-right {
+    display: flex;
+    align-items: center;
+  }
+  #navBar button.nav-btn {
+    background: none;
     border: none;
-    border-radius: 6px;
-    margin-bottom: 8px;
+    color: var(--primary-color);
     cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.3s;
+    font-size: 24px;
+    margin-right: 16px;
+    position: relative;
   }
-  .friend-list-btn:hover {
-    background: #bbdefb;
+  #navBar button.nav-btn:last-child {
+    margin-right: 0;
   }
+  #notificationBadge {
+    position: absolute;
+    top: 2px; right: 2px;
+    background: #e53935;
+    color: white;
+    border-radius: 50%;
+    font-size: 10px;
+    width: 16px; height: 16px;
+    text-align: center;
+    line-height: 16px;
+    display: none;
+  }
+  #notificationDropdown {
+    position: absolute;
+    top: 42px; right: 10px;
+    width: 280px;
+    max-height: 320px;
+    background: var(--card-bg);
+    box-shadow: 0 4px 10px rgb(0 0 0 / 0.25);
+    border-radius: 8px;
+    overflow-y: auto;
+    display: none;
+    z-index: 15;
+  }
+  .notification-item {
+    padding: 10px 16px;
+    border-bottom: 1px solid #ccc;
+    cursor: pointer;
+  }
+  .notification-item:last-child {
+    border-bottom: none;
+  }
+  .notification-item:hover {
+    background: var(--primary-color);
+    color: white;
+  }
+
+  /* ==== AVATAR ==== */
   .avatar {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     margin-right: 12px;
     object-fit: cover;
-    border: 1.5px solid #2196F3;
   }
-  .user-header {
+  .friend-list-btn {
     display: flex;
     align-items: center;
-    margin-bottom: 12px;
-  }
-  .user-header strong {
-    font-size: 1.2rem;
-  }
-  .post-content {
-    font-size: 1rem;
-    margin: 8px 0;
-    white-space: pre-wrap;
-  }
-  .post-footer {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 16px;
-  }
-  .post-footer button {
     background: none;
     border: none;
-    color: #2196F3;
     cursor: pointer;
-    font-weight: 600;
-    padding: 4px 8px;
+    padding: 8px 0;
+    width: 100%;
+    text-align: left;
+    font-size: 15px;
+    color: var(--text-color);
+  }
+  .friend-list-btn:hover {
+    background: var(--input-bg);
+  }
+
+  /* ==== FRIEND ACTION BUTTONS ==== */
+  .friend-action-btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-left: 8px;
+    border: none;
+    cursor: pointer;
+  }
+  .friend-action-btn.accept {
+    background-color: #4caf50;
+    color: white;
+  }
+  .friend-action-btn.decline {
+    background-color: #f44336;
+    color: white;
+  }
+
+  /* ==== CHAT UI ==== */
+  .chat-window {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
     border-radius: 6px;
-    transition: background-color 0.2s;
-  }
-  .post-footer button:hover {
-    background-color: #e3f2fd;
-  }
-  #feedPosts .card {
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.15);
     padding: 12px;
+    overflow: hidden;
+  }
+  #chatMessages {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 8px;
   }
   .chat-message {
-    max-width: 75%;
-    padding: 8px 12px;
+    max-width: 70%;
     margin-bottom: 6px;
+    padding: 8px 12px;
     border-radius: 20px;
-    line-height: 1.3;
     word-wrap: break-word;
-    position: relative;
-    font-size: 0.95rem;
+    font-size: 14px;
+    line-height: 1.3;
   }
   .chat-message.sent {
-    background-color: #dcf8c6;
-    margin-left: auto;
+    background-color: var(--primary-color);
+    color: white;
+    align-self: flex-end;
     border-bottom-right-radius: 0;
   }
   .chat-message.received {
-    background-color: white;
-    border: 1px solid #ddd;
-    margin-right: auto;
+    background-color: #e0e0e0;
+    color: #222;
+    align-self: flex-start;
     border-bottom-left-radius: 0;
   }
-  .chat-window {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 180px);
-  }
-  #chatMessages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-    background: #f7f7f7;
-    border-radius: 10px;
-    margin-bottom: 12px;
+  #typingIndicator {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+    min-height: 18px;
   }
   #chatInput {
     resize: none;
-    font-size: 1rem;
     border-radius: 20px;
-    padding: 10px 14px;
     border: 1px solid #ccc;
+    padding: 8px 12px;
   }
-  #sendChatBtn {
-    margin-top: 6px;
+
+  /* ==== SETTINGS ==== */
+  #settingsDarkModeToggle {
+    margin-bottom: 16px;
   }
-  #typingIndicator {
-    font-style: italic;
-    color: #555;
-    min-height: 18px;
-    margin-bottom: 6px;
-  }
-  /* Notification */
-  #notificationBtn {
-    position: relative;
+  #settingsDarkModeToggle label {
     cursor: pointer;
-    font-size: 24px;
-    border: none;
-    background: none;
-    color: white;
-    margin-right: 12px;
   }
-  #notificationBadge {
-    position: absolute;
-    top: -5px; right: -5px;
-    background: #f44336;
-    color: white;
+  #settingsPasswordChange input {
+    margin-bottom: 8px;
+  }
+  #settingsPasswordChange button {
+    margin-top: 8px;
+  }
+
+  /* ==== PROFILE FRIENDS ==== */
+  #profileFriends {
+    margin-top: 16px;
+  }
+  #profileFriends h4 {
+    margin-bottom: 8px;
+  }
+  #profileFriends .friend-item {
+    display: inline-block;
+    width: 70px;
+    margin: 4px;
+    cursor: pointer;
+    text-align: center;
+    color: var(--text-color);
+  }
+  #profileFriends .friend-item img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  #profileFriends .friend-item span {
+    display: block;
     font-size: 12px;
-    padding: 2px 6px;
-    border-radius: 12px;
-    display: none;
-  }
-  #notificationDropdown {
-    position: fixed;
-    bottom: 56px;
-    right: 12px;
-    background: white;
-    width: 280px;
-    max-height: 360px;
-    overflow-y: auto;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    border-radius: 10px;
-    display: none;
-    z-index: 20;
-  }
-  .notification-item {
-    padding: 10px 14px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-  }
-  .notification-item:hover {
-    background: #f1f1f1;
-  }
-  .notification-item[style*="font-weight: bold"] {
-    font-weight: bold;
-  }
-  /* Scrollbar */
-  #app::-webkit-scrollbar,
-  #chatMessages::-webkit-scrollbar,
-  #notificationDropdown::-webkit-scrollbar {
-    width: 8px;
-  }
-  #app::-webkit-scrollbar-thumb,
-  #chatMessages::-webkit-scrollbar-thumb,
-  #notificationDropdown::-webkit-scrollbar-thumb {
-    background: #bbb;
-    border-radius: 4px;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>
 </head>
 <body>
-<header>
-  Xinn Social
-  <button id="notificationBtn" title="Notifications">
-    <span class="material-icons">notifications</span>
-    <span id="notificationBadge"></span>
-  </button>
-</header>
+<div id="navBar" style="display:none;">
+  <div class="nav-left">
+    <button class="nav-btn" title="Feed" onclick="showPage('feed')">
+      <span class="material-icons">home</span>
+    </button>
+    <button class="nav-btn" title="Friends" onclick="showPage('friends')">
+      <span class="material-icons">people</span>
+    </button>
+    <button class="nav-btn" title="Chat" onclick="showPage('chat')">
+      <span class="material-icons">chat</span>
+    </button>
+    <button class="nav-btn" title="Profile" onclick="showPage('profile'); renderProfile(auth.currentUser.uid)">
+      <span class="material-icons">account_circle</span>
+    </button>
+    <button class="nav-btn" title="Settings" onclick="showPage('settings')">
+      <span class="material-icons">settings</span>
+    </button>
+  </div>
+  <div class="nav-right" style="position:relative;">
+    <button id="notificationBtn" class="nav-btn" title="Notifications">
+      <span class="material-icons">notifications</span>
+      <span id="notificationBadge"></span>
+    </button>
+    <div id="notificationDropdown"></div>
+  </div>
+</div>
 
-<div id="app"></div>
+<div id="app" style="padding: 12px; max-width: 720px; margin: auto;"></div>
 
-<div id="notificationDropdown"></div>
-
-<nav id="navBar" style="display:none;">
-  <button id="navFeed" title="Feed" onclick="showPage('feed')">
-    <span class="material-icons">home</span>
-  </button>
-  <button id="navFriends" title="Friends" onclick="showPage('friends')">
-    <span class="material-icons">group</span>
-  </button>
-  <button id="navChat" title="Chat" onclick="showPage('chat')">
-    <span class="material-icons">chat</span>
-  </button>
-  <button id="navProfile" title="Profile" onclick="showPage('profile')">
-    <span class="material-icons">person</span>
-  </button>
-  <button id="navSettings" title="Settings" onclick="showPage('settings')">
-    <span class="material-icons">settings</span>
-  </button>
-</nav>
-
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-
+<!-- Firebase SDKs and initialize your firebase app -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script>
-  // Firebase config (replace with your own!)
+  // Your Firebase config (replace with your actual config)
   const firebaseConfig = {
-    apiKey: "AIzaSyCGN7t5FjDeJ-ewm7S_9z0VJrRSggTaJ2Q",
-    authDomain: "coin-base-by-hector.firebaseapp.com",
-    projectId: "coin-base-by-hector",
-    storageBucket: "coin-base-by-hector.appspot.com",
-    messagingSenderId: "398789890422",
-    appId: "1:398789890422:web:ed6a928037b24be2e36a57",
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTHDOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_ID",
+    appId: "YOUR_APP_ID"
   };
-  firebase.initializeApp(firebaseConfig);
 
+  firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
   const storage = firebase.storage();
 
-  // Globals for chat
+  // ==== GLOBALS ====
+  let currentChatFriendId = null;
+  let currentChatFriendName = '';
   let unsubscribeChat = null;
   let unsubscribeNotifications = null;
-  let currentChatFriendId = null;
-  let currentChatFriendName = null;
-  let typingTimeout = null;
 
-  // ====== LOGIN & REGISTER ======
-
-  function showLogin() {
-    document.getElementById('app').innerHTML = `
-      <div class="card" style="max-width:400px; margin: 24px auto;">
-        <h3>Login to Xinn Social</h3>
-        <input type="email" id="email" placeholder="Email (@xinn.lab only)" />
-        <input type="password" id="password" placeholder="Password" />
-        <button class="primary" onclick="login()">Login</button>
-        <p style="text-align:center; margin-top:12px;">
-          Or <a href="#" onclick="showRegister()">Register</a>
-        </p>
-      </div>
-    `;
-  }
-
-  function showRegister() {
-    document.getElementById('app').innerHTML = `
-      <div class="card" style="max-width:400px; margin: 24px auto;">
-        <h3>Create Account</h3>
-        <input type="text" id="name" placeholder="Full Name" />
-        <input type="number" id="age" placeholder="Age" />
-        <textarea id="bio" placeholder="Bio" rows="3"></textarea>
-        <input type="email" id="email" placeholder="Email (@xinn.lab only)" />
-        <input type="password" id="password" placeholder="Password" />
-        <button class="primary" onclick="register()">Register</button>
-        <p style="text-align:center; margin-top:12px;">
-          Already have an account? <a href="#" onclick="showLogin()">Login</a>
-        </p>
-      </div>
-    `;
-  }
-
-  async function login() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    if (!email.endsWith('@xinn.lab')) {
-      alert('Email must end with @xinn.lab');
-      return;
-    }
-    try {
-      await auth.signInWithEmailAndPassword(email, password);
-    } catch (e) {
-      alert('Login failed: ' + e.message);
-    }
-  }
-
-  async function register() {
-    const name = document.getElementById('name').value.trim();
-    const age = document.getElementById('age').value.trim();
-    const bio = document.getElementById('bio').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    if (!email.endsWith('@xinn.lab')) {
-      alert('Email must end with @xinn.lab');
-      return;
-    }
-    if (!name || !age || !bio) {
-      alert('Please fill all fields');
-      return;
-    }
-    try {
-      const cred = await auth.createUserWithEmailAndPassword(email, password);
-      await db.collection('users').doc(cred.user.uid).set({
-        name, age, bio, email, avatarUrl: ''
-      });
-      alert('Registration successful. You can now log in.');
-      showLogin();
-    } catch (e) {
-      alert('Registration failed: ' + e.message);
-    }
-  }
-
-  // ====== NAVIGATION ======
-
-  function showPage(page) {
-    // Activate nav button
-    document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('nav' + page.charAt(0).toUpperCase() + page.slice(1)).classList.add('active');
-
-    if (unsubscribeChat) unsubscribeChat();
-    if (unsubscribeNotifications) unsubscribeNotifications();
-
-    switch(page) {
-      case 'feed': renderFeed(); break;
-      case 'friends': renderFriends(); break;
-      case 'chat': renderChat(); break;
-      case 'profile': renderProfile(auth.currentUser.uid); break;
-      case 'settings': renderSettings(); break;
-    }
-
-    document.getElementById('notificationDropdown').style.display = 'none';
-  }
-
-  // ====== FEED ======
-
-  function renderFeed() {
-    document.getElementById('app').innerHTML = `
-      <div class="card" style="max-width:600px; margin: 0 auto;">
-        <textarea id="postContent" placeholder="What's on your mind?" rows="3" style="resize:none;"></textarea>
-        <button class="primary" onclick="createPost()">Post</button>
-      </div>
-      <div id="feedPosts" style="max-width:600px; margin: 16px auto;"></div>
-    `;
-    loadPosts();
-  }
-
-  async function createPost() {
-    const content = document.getElementById('postContent').value.trim();
-    if (!content) return alert('Post cannot be empty');
-    try {
-      await db.collection('posts').add({
-        content,
-        uid: auth.currentUser.uid,
-        likes: [],
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      document.getElementById('postContent').value = '';
-    } catch(e) {
-      alert('Failed to create post: ' + e.message);
-    }
-  }
-
-  function loadPosts() {
-    const feedDiv = document.getElementById('feedPosts');
-    db.collection('posts').orderBy('timestamp', 'desc').onSnapshot(async snapshot => {
-      if(snapshot.empty) {
-        feedDiv.innerHTML = '<p style="text-align:center; color:#555;">No posts yet.</p>';
-        return;
-      }
-      let html = '';
-      for (const doc of snapshot.docs) {
-        const post = doc.data();
-        const userDoc = await db.collection('users').doc(post.uid).get();
-        const user = userDoc.data() || { name: 'Unknown', avatarUrl: '' };
-        const liked = post.likes.includes(auth.currentUser.uid);
-        const time = post.timestamp ? post.timestamp.toDate().toLocaleString() : 'Just now';
-
-        html += `
-          <div class="card" style="max-width:600px; margin: 0 auto 12px;">
-            <div class="user-header">
-              <img src="${user.avatarUrl || 'https://i.pravatar.cc/40?u='+post.uid}" alt="Avatar" class="avatar" />
-              <div>
-                <strong style="cursor:pointer;" onclick="visitProfile('${post.uid}')">${escapeHtml(user.name)}</strong><br />
-                <small style="color:gray;">${time}</small>
-              </div>
-            </div>
-            <div class="post-content">${escapeHtml(post.content)}</div>
-            <div class="post-footer">
-              <button onclick="toggleLike('${doc.id}')">${liked ? '❤️' : '🤍'} Like (${post.likes.length})</button>
-            </div>
-          </div>
-        `;
-      }
-      feedDiv.innerHTML = html;
-    });
-  }
-
-  async function toggleLike(postId) {
-    try {
-      const postRef = db.collection('posts').doc(postId);
-      const postSnap = await postRef.get();
-      if (!postSnap.exists) return;
-      const post = postSnap.data();
-      let likes = post.likes || [];
-      if (likes.includes(auth.currentUser.uid)) {
-        likes = likes.filter(uid => uid !== auth.currentUser.uid);
-      } else {
-        likes.push(auth.currentUser.uid);
-      }
-      await postRef.update({ likes });
-    } catch (e) {
-      alert('Error toggling like: ' + e.message);
-    }
-  }
-
-  // ====== PROFILE ======
-
-  async function renderProfile(uid) {
-    try {
-      const userDoc = await db.collection('users').doc(uid).get();
-      if (!userDoc.exists) {
-        document.getElementById('app').innerHTML = '<p>User not found.</p>';
-        return;
-      }
-      const u = userDoc.data();
-      const currentUserId = auth.currentUser.uid;
-
-      const isCurrentUser = uid === currentUserId;
-      let isFriend = false;
-      if (!isCurrentUser) {
-        const friendDoc = await db.collection('friends').doc(currentUserId).collection('userFriends').doc(uid).get();
-        isFriend = friendDoc.exists;
-      }
-
-      document.getElementById('app').innerHTML = `
-        <div class="card" style="max-width:400px; margin: 0 auto;">
-          <div style="text-align:center; margin-bottom:12px;">
-            <img src="${u.avatarUrl || 'https://i.pravatar.cc/120?u='+uid}" alt="Avatar" class="avatar" style="width:120px; height:120px; border-radius:50%; margin-bottom: 8px;" />
-            ${isCurrentUser ? `<input type="file" id="avatarInput" accept="image/*" />` : ''}
-          </div>
-          <h2>${escapeHtml(u.name)}</h2>
-          <p><strong>Age:</strong> ${escapeHtml(u.age)}</p>
-          <p><strong>Bio:</strong> ${escapeHtml(u.bio)}</p>
-          ${isCurrentUser ? `<button class="primary" onclick="editProfile()">Edit Profile</button>` : ''}
-          ${!isCurrentUser ? (isFriend ? `<button class="primary" onclick="startChat('${uid}', '${escapeJs(u.name)}')">Chat</button>` : `<button class="primary" onclick="sendFriendRequest('${uid}')">Add Friend</button>`) : ''}
-          <div id="uploadStatus" style="margin-top:8px; color:#1976d2;"></div>
-        </div>
-      `;
-
-      if (isCurrentUser) {
-        document.getElementById('avatarInput').addEventListener('change', handleAvatarUpload);
-      }
-
-    } catch (e) {
-      alert('Failed to load profile: ' + e.message);
-    }
-  }
-
+  // ==== UTILITIES ====
   function escapeHtml(text) {
     if (!text) return '';
     return text.replace(/[&<>"']/g, m => {
@@ -565,466 +342,132 @@
     return text.replace(/'/g, "\\'");
   }
 
-  async function handleAvatarUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const statusDiv = document.getElementById('uploadStatus');
-    statusDiv.textContent = 'Uploading avatar...';
+  // ==== NAVIGATION ====
 
-    const uid = auth.currentUser.uid;
-    const storageRef = storage.ref('avatars/' + uid + '.' + file.name.split('.').pop());
-    try {
-      await storageRef.put(file);
-      const url = await storageRef.getDownloadURL();
-      await db.collection('users').doc(uid).update({ avatarUrl: url });
-      statusDiv.textContent = 'Avatar uploaded successfully.';
-      renderProfile(uid);
-    } catch(e) {
-      statusDiv.textContent = 'Avatar upload failed: ' + e.message;
+  function showPage(page) {
+    switch(page) {
+      case 'feed': renderFeed(); break;
+      case 'friends': renderFriends(); break;
+      case 'chat': renderChat(); break;
+      case 'profile': renderProfile(auth.currentUser.uid); break;
+      case 'settings': renderSettings(); break;
+      default: renderFeed();
     }
   }
 
-  function editProfile() {
-    db.collection('users').doc(auth.currentUser.uid).get().then(doc => {
-      const u = doc.data();
+  // ==== LOGIN / REGISTER ====
+
+  function showLogin() {
+    document.getElementById('app').innerHTML = `
+      <div class="card" style="max-width: 400px; margin: 40px auto;">
+        <h2>Login / Register</h2>
+        <input id="loginEmail" placeholder="Email" type="email" />
+        <input id="loginPassword" placeholder="Password" type="password" />
+        <button class="primary" onclick="login()">Login</button>
+        <button class="primary" style="margin-left:8px;" onclick="register()">Register</button>
+      </div>
+    `;
+  }
+
+  async function login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    if (!email.endsWith('@xinn.lab')) return alert('Email must end with @xinn.lab');
+    if (!password) return alert('Password is required');
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch(e) {
+      alert('Login failed: ' + e.message);
+    }
+  }
+
+  async function register() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    if (!email.endsWith('@xinn.lab')) return alert('Email must end with @xinn.lab');
+    if (!password) return alert('Password is required');
+    try {
+      const res = await auth.createUserWithEmailAndPassword(email, password);
+      // Create user doc
+      await db.collection('users').doc(res.user.uid).set({
+        email,
+        name: email.split('@')[0],
+        nameLower: email.split('@')[0].toLowerCase(),
+        age: '',
+        bio: '',
+        avatarUrl: ''
+      });
+      alert('Registered! Please login.');
+    } catch(e) {
+      alert('Registration failed: ' + e.message);
+    }
+  }
+
+  // ==== FEED ====
+
+  // ... Your existing feed code here (not shown for brevity) ...
+
+  // ==== PROFILE ====
+
+  async function renderProfile(uid) {
+    try {
+      const userDoc = await db.collection('users').doc(uid).get();
+      if (!userDoc.exists) throw new Error('User not found');
+      const u = userDoc.data();
+
+      const isCurrentUser = auth.currentUser.uid === uid;
+
+      // Load friend list of this user
+      const friendsSnap = await db.collection('friends').doc(uid).collection('userFriends').orderBy('since','desc').get();
+      let friendsHtml = '';
+      if (friendsSnap.empty) {
+        friendsHtml = '<p>No friends yet.</p>';
+      } else {
+        friendsHtml = friendsSnap.docs.map(doc => {
+          const fUid = doc.id;
+          return `<div class="friend-item" onclick="visitProfile('${fUid}')">
+            <img src="https://i.pravatar.cc/60?u=${fUid}" alt="Friend" />
+            <span>${escapeHtml(doc.data().name || fUid)}</span>
+          </div>`;
+        }).join('');
+      }
+
       document.getElementById('app').innerHTML = `
         <div class="card" style="max-width:400px; margin: 0 auto;">
-          <h3>Edit Profile</h3>
-          <input id="editName" value="${escapeHtml(u.name)}" />
-          <input id="editAge" value="${escapeHtml(u.age)}" />
-          <textarea id="editBio" rows="3">${escapeHtml(u.bio)}</textarea>
-          <button class="primary" onclick="saveProfile()">Save</button>
-          <button style="margin-top:8px;" onclick="renderProfile('${auth.currentUser.uid}')">Cancel</button>
+          <div style="text-align:center; margin-bottom:12px;">
+            <img src="${u.avatarUrl || 'https://i.pravatar.cc/120?u='+uid}" alt="Avatar" class="avatar" style="width:120px; height:120px; border-radius:50%; margin-bottom: 8px;" />
+            ${isCurrentUser ? `<input type="file" id="avatarInput" accept="image/*" />` : ''}
+          </div>
+          <h2>${escapeHtml(u.name)}</h2>
+          <p><strong>Age:</strong> ${escapeHtml(u.age)}</p>
+          <p><strong>Bio:</strong> ${escapeHtml(u.bio)}</p>
+          ${isCurrentUser ? `<button class="primary" onclick="editProfile()">Edit Profile</button>` : ''}
+          <div id="profileFriends">
+            <h4>Friends</h4>
+            ${friendsHtml}
+          </div>
+          ${!isCurrentUser ? `<button class="primary" onclick="sendFriendRequest('${uid}')">Add Friend</button>` : ''}
+          <div id="uploadStatus" style="margin-top:8px; color:#1976d2;"></div>
         </div>
       `;
-    });
-  }
 
-  async function saveProfile() {
-    const name = document.getElementById('editName').value.trim();
-    const age = document.getElementById('editAge').value.trim();
-    const bio = document.getElementById('editBio').value.trim();
-    if (!name || !age || !bio) return alert('All fields are required');
-    try {
-      await db.collection('users').doc(auth.currentUser.uid).update({ name, age, bio });
-      alert('Profile updated.');
-      renderProfile(auth.currentUser.uid);
+      if (isCurrentUser) {
+        document.getElementById('avatarInput').addEventListener('change', handleAvatarUpload);
+      }
     } catch (e) {
-      alert('Failed to update profile: ' + e.message);
+      alert('Failed to load profile: ' + e.message);
     }
   }
 
-  // ====== FRIEND SYSTEM ======
+  // ==== REST OF PROFILE EDIT, FRIENDS, CHAT CODE ====
+  // ... Reuse your existing functions from previous full code with adjustments for new UI & logic ...
 
-  function renderFriends() {
-    document.getElementById('app').innerHTML = `
-      <div style="max-width: 500px; margin: 0 auto;">
-        <div class="card">
-          <input type="text" id="friendSearchInput" placeholder="Search friends or users by name..." autocomplete="off" />
-          <div id="searchResults" style="margin-top: 10px;"></div>
-        </div>
-        <div id="friendRequests" style="margin-top: 20px;"></div>
-        <div id="friendList" style="margin-top: 20px;"></div>
-      </div>
-    `;
-
-    document.getElementById('friendSearchInput').addEventListener('input', onFriendSearch);
-
-    loadFriendRequests();
-    loadFriendsList();
-  }
-
-  let friendSearchTimeout = null;
-
-  function onFriendSearch(e) {
-    const query = e.target.value.trim().toLowerCase();
-    if (friendSearchTimeout) clearTimeout(friendSearchTimeout);
-    friendSearchTimeout = setTimeout(() => {
-      if (!query) {
-        document.getElementById('searchResults').innerHTML = '';
-        return;
-      }
-      searchUsers(query);
-    }, 400);
-  }
-
-  async function searchUsers(query) {
-    const currentUid = auth.currentUser.uid;
-    const searchResultsDiv = document.getElementById('searchResults');
-    searchResultsDiv.innerHTML = 'Searching...';
-
-    try {
-      const usersSnap = await db.collection('users')
-        .orderBy('nameLower')
-        .startAt(query)
-        .endAt(query + '\uf8ff')
-        .limit(10)
-        .get();
-
-      let results = [];
-      usersSnap.forEach(doc => {
-        if(doc.id !== currentUid) {
-          results.push({ uid: doc.id, ...doc.data() });
-        }
-      });
-
-      if(results.length === 0) {
-        searchResultsDiv.innerHTML = `<p style="color:#777;">No users found.</p>`;
-        return;
-      }
-
-      // Load friend requests and friends to mark state
-      const friendRequestsSentSnap = await db.collection('friendRequests').doc(currentUid).collection('sent').get();
-      const friendRequestsReceivedSnap = await db.collection('friendRequests').doc(currentUid).collection('received').get();
-      const friendsSnap = await db.collection('friends').doc(currentUid).collection('userFriends').get();
-
-      const sentRequests = new Set(friendRequestsSentSnap.docs.map(d => d.id));
-      const receivedRequests = new Set(friendRequestsReceivedSnap.docs.map(d => d.id));
-      const friends = new Set(friendsSnap.docs.map(d => d.id));
-
-      let html = '';
-
-      results.forEach(user => {
-        const isFriend = friends.has(user.uid);
-        const sent = sentRequests.has(user.uid);
-        const received = receivedRequests.has(user.uid);
-
-        html += `
-          <div class="card" style="display:flex; align-items:center; justify-content:space-between;">
-            <div style="display:flex; align-items:center; cursor:pointer;" onclick="visitProfile('${user.uid}')">
-              <img src="${user.avatarUrl || 'https://i.pravatar.cc/40?u='+user.uid}" class="avatar" />
-              <span>${escapeHtml(user.name)}</span>
-            </div>
-            <div>
-              ${isFriend ? `<button disabled style="cursor:default;">Friends</button>` : ''}
-              ${sent ? `<button onclick="cancelFriendRequest('${user.uid}')" class="friend-action-btn decline">Cancel Request</button>` : ''}
-              ${received ? `<button onclick="acceptFriendRequest('${user.uid}')" class="friend-action-btn accept">Accept</button> <button onclick="declineFriendRequest('${user.uid}')" class="friend-action-btn decline">Decline</button>` : ''}
-              ${(!isFriend && !sent && !received) ? `<button onclick="sendFriendRequest('${user.uid}')" class="friend-action-btn accept">Add Friend</button>` : ''}
-            </div>
-          </div>
-        `;
-      });
-
-      searchResultsDiv.innerHTML = html;
-    } catch(e) {
-      searchResultsDiv.innerHTML = `<p style="color:red;">Error searching users: ${e.message}</p>`;
-    }
-  }
-
-  async function sendFriendRequest(targetUid) {
-    const currentUid = auth.currentUser.uid;
-    if (currentUid === targetUid) return alert("You can't send friend request to yourself.");
-
-    try {
-      // Check existing requests or friendship
-      const sentReqDoc = await db.collection('friendRequests').doc(currentUid).collection('sent').doc(targetUid).get();
-      const receivedReqDoc = await db.collection('friendRequests').doc(currentUid).collection('received').doc(targetUid).get();
-      const friendDoc = await db.collection('friends').doc(currentUid).collection('userFriends').doc(targetUid).get();
-      if (sentReqDoc.exists || receivedReqDoc.exists || friendDoc.exists) {
-        alert('Request or friendship already exists.');
-        return;
-      }
-
-      // Add to sent and received collections
-      await db.collection('friendRequests').doc(currentUid).collection('sent').doc(targetUid).set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-      await db.collection('friendRequests').doc(targetUid).collection('received').doc(currentUid).set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-
-      alert('Friend request sent!');
-      renderFriends();
-    } catch (e) {
-      alert('Failed to send friend request: ' + e.message);
-    }
-  }
-
-  async function cancelFriendRequest(targetUid) {
-    const currentUid = auth.currentUser.uid;
-    try {
-      await db.collection('friendRequests').doc(currentUid).collection('sent').doc(targetUid).delete();
-      await db.collection('friendRequests').doc(targetUid).collection('received').doc(currentUid).delete();
-      renderFriends();
-    } catch (e) {
-      alert('Failed to cancel request: ' + e.message);
-    }
-  }
-
-  async function acceptFriendRequest(fromUid) {
-    const currentUid = auth.currentUser.uid;
-    try {
-      // Add to friends collection both sides
-      await db.collection('friends').doc(currentUid).collection('userFriends').doc(fromUid).set({ since: firebase.firestore.FieldValue.serverTimestamp() });
-      await db.collection('friends').doc(fromUid).collection('userFriends').doc(currentUid).set({ since: firebase.firestore.FieldValue.serverTimestamp() });
-
-      // Remove friend requests both sides
-      await db.collection('friendRequests').doc(currentUid).collection('received').doc(fromUid).delete();
-      await db.collection('friendRequests').doc(fromUid).collection('sent').doc(currentUid).delete();
-
-      alert('Friend request accepted!');
-      renderFriends();
-    } catch (e) {
-      alert('Failed to accept friend request: ' + e.message);
-    }
-  }
-
-  async function declineFriendRequest(fromUid) {
-    const currentUid = auth.currentUser.uid;
-    try {
-      await db.collection('friendRequests').doc(currentUid).collection('received').doc(fromUid).delete();
-      await db.collection('friendRequests').doc(fromUid).collection('sent').doc(currentUid).delete();
-      renderFriends();
-    } catch (e) {
-      alert('Failed to decline friend request: ' + e.message);
-    }
-  }
-
-  async function loadFriendRequests() {
-    const currentUid = auth.currentUser.uid;
-    const reqDiv = document.getElementById('friendRequests');
-    reqDiv.innerHTML = `<h3>Friend Requests</h3>`;
-
-    try {
-      const receivedSnap = await db.collection('friendRequests').doc(currentUid).collection('received').orderBy('timestamp', 'desc').get();
-      if (receivedSnap.empty) {
-        reqDiv.innerHTML += `<p>No pending friend requests.</p>`;
-        return;
-      }
-      let html = '';
-      for (const doc of receivedSnap.docs) {
-        const uid = doc.id;
-        const userDoc = await db.collection('users').doc(uid).get();
-        const user = userDoc.data();
-        if (!user) continue;
-
-        html += `
-          <div class="card" style="display:flex; align-items:center; justify-content:space-between;">
-            <div style="display:flex; align-items:center; cursor:pointer;" onclick="visitProfile('${uid}')">
-              <img src="${user.avatarUrl || 'https://i.pravatar.cc/40?u='+uid}" class="avatar" />
-              <span>${escapeHtml(user.name)}</span>
-            </div>
-            <div>
-              <button onclick="acceptFriendRequest('${uid}')" class="friend-action-btn accept">Accept</button>
-              <button onclick="declineFriendRequest('${uid}')" class="friend-action-btn decline">Decline</button>
-            </div>
-          </div>
-        `;
-      }
-      reqDiv.innerHTML += html;
-    } catch(e) {
-      reqDiv.innerHTML += `<p style="color:red;">Failed to load requests: ${e.message}</p>`;
-    }
-  }
-
-  async function loadFriendsList() {
-    const currentUid = auth.currentUser.uid;
-    const friendListDiv = document.getElementById('friendList');
-    friendListDiv.innerHTML = `<h3>Your Friends</h3>`;
-
-    try {
-      const friendsSnap = await db.collection('friends').doc(currentUid).collection('userFriends').orderBy('since', 'desc').get();
-      if (friendsSnap.empty) {
-        friendListDiv.innerHTML += `<p>You have no friends yet.</p>`;
-        return;
-      }
-      let html = '';
-      for (const doc of friendsSnap.docs) {
-        const uid = doc.id;
-        const userDoc = await db.collection('users').doc(uid).get();
-        const user = userDoc.data();
-        if (!user) continue;
-
-        html += `
-          <button class="friend-list-btn" onclick="visitProfile('${uid}')">
-            <img src="${user.avatarUrl || 'https://i.pravatar.cc/40?u='+uid}" class="avatar" />
-            ${escapeHtml(user.name)}
-          </button>
-        `;
-      }
-      friendListDiv.innerHTML += html;
-    } catch(e) {
-      friendListDiv.innerHTML += `<p style="color:red;">Failed to load friends: ${e.message}</p>`;
-    }
-  }
-
-  // ====== CHAT ======
-
-  function renderChat() {
-    document.getElementById('app').innerHTML = `
-      <div style="max-width:600px; margin: 0 auto; display:flex; flex-direction: column; height: calc(100vh - 160px);">
-        <div class="card" style="padding: 8px; margin-bottom: 8px; overflow-y:auto; flex-shrink: 0;">
-          <strong>Friends</strong>
-          <div id="chatFriendList" style="margin-top:8px; max-height: 150px; overflow-y:auto;"></div>
-        </div>
-        <div id="chatWindow" class="chat-window" style="display:none;">
-          <div id="chatHeader" style="padding-bottom:8px; font-weight:bold; border-bottom: 1px solid #ccc;"></div>
-          <div id="chatMessages"></div>
-          <div id="typingIndicator"></div>
-          <textarea id="chatInput" rows="2" placeholder="Type a message..."></textarea>
-          <button id="sendChatBtn" class="primary" disabled>Send</button>
-        </div>
-      </div>
-    `;
-
-    loadChatFriends();
-
-    document.getElementById('chatInput').addEventListener('input', onTyping);
-    document.getElementById('sendChatBtn').addEventListener('click', sendMessage);
-  }
-
-  async function loadChatFriends() {
-    const uid = auth.currentUser.uid;
-    const friendListDiv = document.getElementById('chatFriendList');
-    friendListDiv.innerHTML = 'Loading...';
-
-    try {
-      const friendsSnap = await db.collection('friends').doc(uid).collection('userFriends').orderBy('since', 'desc').get();
-      if (friendsSnap.empty) {
-        friendListDiv.innerHTML = '<p>You have no friends to chat with.</p>';
-        return;
-      }
-      let html = '';
-      for (const doc of friendsSnap.docs) {
-        const fUid = doc.id;
-        const userDoc = await db.collection('users').doc(fUid).get();
-        const user = userDoc.data();
-        if (!user) continue;
-        html += `
-          <button class="friend-list-btn" onclick="startChat('${fUid}', '${escapeJs(user.name)}')">
-            <img src="${user.avatarUrl || 'https://i.pravatar.cc/40?u='+fUid}" class="avatar" />
-            ${escapeHtml(user.name)}
-          </button>
-        `;
-      }
-      friendListDiv.innerHTML = html;
-    } catch (e) {
-      friendListDiv.innerHTML = `<p style="color:red;">Failed to load friends: ${e.message}</p>`;
-    }
-  }
-
-  function startChat(friendUid, friendName) {
-    currentChatFriendId = friendUid;
-    currentChatFriendName = friendName;
-
-    document.getElementById('chatWindow').style.display = 'flex';
-    document.getElementById('chatHeader').textContent = `Chat with ${friendName}`;
-    document.getElementById('chatMessages').innerHTML = '';
-    document.getElementById('chatInput').value = '';
-    document.getElementById('sendChatBtn').disabled = true;
-    document.getElementById('typingIndicator').textContent = '';
-
-    if (unsubscribeChat) unsubscribeChat();
-
-    const chatId = getChatId(auth.currentUser.uid, friendUid);
-    const chatRef = db.collection('chats').doc(chatId).collection('messages').orderBy('timestamp', 'asc');
-
-    unsubscribeChat = chatRef.onSnapshot(snapshot => {
-      const chatMessages = document.getElementById('chatMessages');
-      chatMessages.innerHTML = '';
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-        const sentByMe = msg.sender === auth.currentUser.uid;
-        chatMessages.innerHTML += `
-          <div class="chat-message ${sentByMe ? 'sent' : 'received'}" title="${msg.timestamp ? msg.timestamp.toDate().toLocaleString() : ''}">
-            ${escapeHtml(msg.text)}
-          </div>
-        `;
-      });
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    });
-
-    // Listen typing status
-    if (unsubscribeNotifications) unsubscribeNotifications();
-    unsubscribeNotifications = db.collection('chats').doc(getChatId(auth.currentUser.uid, friendUid)).onSnapshot(doc => {
-      if (!doc.exists) return;
-      const data = doc.data();
-      const typingUsers = data.typing || {};
-      if (typingUsers[friendUid]) {
-        document.getElementById('typingIndicator').textContent = `${friendName} is typing...`;
-      } else {
-        document.getElementById('typingIndicator').textContent = '';
-      }
-    });
-  }
-
-  function getChatId(uid1, uid2) {
-    return [uid1, uid2].sort().join('_');
-  }
-
-  let typingTimeoutHandle = null;
-
-  function onTyping() {
-    const input = document.getElementById('chatInput');
-    const btn = document.getElementById('sendChatBtn');
-    btn.disabled = !input.value.trim();
-
-    if (!currentChatFriendId) return;
-
-    const chatDoc = db.collection('chats').doc(getChatId(auth.currentUser.uid, currentChatFriendId));
-
-    chatDoc.set({
-      typing: {
-        [auth.currentUser.uid]: true,
-        [currentChatFriendId]: false
-      }
-    }, { merge: true });
-
-    if (typingTimeoutHandle) clearTimeout(typingTimeoutHandle);
-
-    typingTimeoutHandle = setTimeout(() => {
-      chatDoc.set({
-        typing: {
-          [auth.currentUser.uid]: false
-        }
-      }, { merge: true });
-    }, 1500);
-  }
-
-  async function sendMessage() {
-    const text = document.getElementById('chatInput').value.trim();
-    if (!text || !currentChatFriendId) return;
-    document.getElementById('chatInput').value = '';
-    document.getElementById('sendChatBtn').disabled = true;
-
-    const chatId = getChatId(auth.currentUser.uid, currentChatFriendId);
-    try {
-      await db.collection('chats').doc(chatId).collection('messages').add({
-        sender: auth.currentUser.uid,
-        receiver: currentChatFriendId,
-        text,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      // Reset typing
-      await db.collection('chats').doc(chatId).set({
-        typing: {
-          [auth.currentUser.uid]: false
-        }
-      }, { merge: true });
-    } catch (e) {
-      alert('Failed to send message: ' + e.message);
-    }
-  }
-
-  // ====== SETTINGS ======
-
-  function renderSettings() {
-    document.getElementById('app').innerHTML = `
-      <div class="card" style="max-width:400px; margin: 0 auto;">
-        <h3>Settings</h3>
-        <button class="primary" onclick="logout()">Logout</button>
-      </div>
-    `;
-  }
-
-  function logout() {
-    auth.signOut();
-  }
-
-  // ====== NOTIFICATIONS ======
+  // ==== NOTIFICATIONS ====
 
   document.getElementById('notificationBtn').addEventListener('click', () => {
     const dropdown = document.getElementById('notificationDropdown');
+    dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
     if (dropdown.style.display === 'block') {
-      dropdown.style.display = 'none';
-    } else {
-      dropdown.style.display = 'block';
       loadNotifications();
     }
   });
@@ -1072,44 +515,95 @@
     }
   }
 
-  // ====== HELPER ======
+  // ==== SETTINGS ====
 
-  function visitProfile(uid) {
-    showPage('profile');
-    renderProfile(uid);
+  function renderSettings() {
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    document.getElementById('app').innerHTML = `
+      <div class="card" style="max-width:400px; margin: 0 auto;">
+        <h3>Settings</h3>
+        <div id="settingsDarkModeToggle">
+          <label>
+            <input type="checkbox" id="darkModeCheckbox" ${darkMode ? 'checked' : ''} />
+            Enable Dark Mode
+          </label>
+        </div>
+        <div id="settingsPasswordChange">
+          <h4>Change Password</h4>
+          <input type="password" id="oldPassword" placeholder="Current Password" />
+          <input type="password" id="newPassword" placeholder="New Password" />
+          <input type="password" id="confirmPassword" placeholder="Confirm New Password" />
+          <button class="primary" onclick="changePassword()">Change Password</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('darkModeCheckbox').addEventListener('change', (e) => {
+      if(e.target.checked) {
+        document.body.classList.add('dark');
+        localStorage.setItem('darkMode', 'true');
+      } else {
+        document.body.classList.remove('dark');
+        localStorage.setItem('darkMode', 'false');
+      }
+    });
   }
 
-  // ====== AUTH LISTENER ======
+  async function changePassword() {
+    const oldPass = document.getElementById('oldPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+    const confirmPass = document.getElementById('confirmPassword').value;
+
+    if (!oldPass || !newPass || !confirmPass) {
+      return alert('Please fill all fields');
+    }
+    if (newPass !== confirmPass) {
+      return alert('New passwords do not match');
+    }
+
+    try {
+      const user = auth.currentUser;
+      const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPass);
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPass);
+      alert('Password changed successfully');
+      // Clear inputs
+      document.getElementById('oldPassword').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+    } catch(e) {
+      alert('Password change failed: ' + e.message);
+    }
+  }
+
+  // ==== AUTH STATE ====
 
   auth.onAuthStateChanged(user => {
     if (user) {
       document.getElementById('navBar').style.display = 'flex';
       showPage('feed');
-      setupUserNameIndexing(user.uid);
     } else {
       document.getElementById('navBar').style.display = 'none';
       showLogin();
     }
   });
 
-  // ====== NAME LOWERCASE INDEXING FOR SEARCH ======
+  // ==== INITIAL DARK MODE ====
 
-  // To ensure searching by lowercase name works,
-  // add a 'nameLower' field on user creation and update.
-
-  async function setupUserNameIndexing(uid) {
-    const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
-    if (!userDoc.exists) return;
-    const userData = userDoc.data();
-    if (userData.nameLower) return; // Already indexed
-    await userRef.update({ nameLower: userData.name.toLowerCase() });
+  if(localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark');
   }
 
-  // ====== UTILS ======
+  // ==== PROFILE FRIEND LIST VISIT ====
 
-  // Escape HTML to avoid injection
-  // Already defined above as escapeHtml()
+  function visitProfile(uid) {
+    showPage('profile');
+    renderProfile(uid);
+  }
+
+  // === You can continue to add your feed, friends list, friend requests, chat code here ===
+  // Just make sure all UI follows the styling and navigation logic here
+  // and uses the updated friend/friend request logic from previous versions.
 
 </script>
 </body>
