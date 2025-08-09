@@ -136,56 +136,111 @@ function register() {
 
 // Render friend list and pending requests
 function renderFriends() {
-  const uid = auth.currentUser.uid;
   document.getElementById('app').innerHTML = `
-    <div class="container">
-      <h3>Friends</h3>
-      <ul id="friendList"></ul>
-      <h3>Pending Friend Requests</h3>
-      <ul id="pendingRequests"></ul>
-      <h3>Search Users</h3>
-      <input id="searchFriendInput" placeholder="Search users by name..." oninput="searchUsers()" />
-      <ul id="searchResults"></ul>
+    <div class="container card">
+      <h3>Friends & Search</h3>
+      <input type="text" id="searchInput" placeholder="Search users by name..." oninput="searchFriends()" />
+      <div id="friendList" style="margin-top:10px;"></div>
+      <div id="searchResults" style="margin-top:20px;"></div>
     </div>
   `;
-
   loadFriendList();
-  loadPendingRequests();
-  document.getElementById('searchResults').innerHTML = '';
 }
 
 // Load current friends
-function loadFriendList() {
+async function loadFriendList() {
   const uid = auth.currentUser.uid;
-  const list = document.getElementById('friendList');
-  list.innerHTML = '<li>Loading friends...</li>';
+  const friendListDiv = document.getElementById('friendList');
+  friendListDiv.innerHTML = '<h4>Your Friends:</h4>';
 
-  db.collection('users').doc(uid).collection('friends').get()
-    .then(snapshot => {
-      if (snapshot.empty) {
-        list.innerHTML = '<li>No friends yet</li>';
+  try {
+    const friendsSnap = await db.collection('users').doc(uid).collection('friends').get();
+    if (friendsSnap.empty) {
+      friendListDiv.innerHTML += '<p>You have no friends yet.</p>';
+      return;
+    }
+
+    let html = '';
+    for (const doc of friendsSnap.docs) {
+      const friendId = doc.id;
+      const userDoc = await db.collection('users').doc(friendId).get();
+      const friend = userDoc.data();
+      if (!friend) continue;
+      html += `
+        <div style="padding:6px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="visitProfile('${friendId}')">
+          <strong>${friend.name}</strong> <small style="color:gray;">(Click to view profile)</small>
+        </div>
+      `;
+    }
+    friendListDiv.innerHTML += html;
+
+  } catch (e) {
+    friendListDiv.innerHTML += `<p style="color:red;">Error loading friends: ${e.message}</p>`;
+  }
+}
+
+let searchTimeout;
+function searchFriends() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(async () => {
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    const searchResultsDiv = document.getElementById('searchResults');
+    searchResultsDiv.innerHTML = '';
+
+    if (!query) return;
+
+    const uid = auth.currentUser.uid;
+
+    try {
+      // Query users where nameLower starts with query
+      const usersSnap = await db.collection('users')
+        .orderBy('nameLower')
+        .startAt(query)
+        .endAt(query + '\uf8ff')
+        .limit(10)
+        .get();
+
+      if (usersSnap.empty) {
+        searchResultsDiv.innerHTML = '<p>No users found.</p>';
         return;
       }
-      list.innerHTML = '';
-      snapshot.forEach(doc => {
-        const friendId = doc.id;
-        db.collection('users').doc(friendId).get()
-          .then(friendDoc => {
-            if (!friendDoc.exists) return;
-            const friendData = friendDoc.data();
-            const li = document.createElement('li');
-            li.textContent = friendData.name || 'Unknown';
-            li.style.cursor = 'pointer';
-            li.title = 'Click to chat';
-            li.onclick = () => openChat(friendId, friendData.name);
-            list.appendChild(li);
-          });
-      });
-    })
-    .catch(e => {
-      list.innerHTML = '<li>Error loading friends</li>';
-      console.error('Load friends error:', e);
-    });
+
+      let html = '<h4>Search Results:</h4>';
+      for (const doc of usersSnap.docs) {
+        const user = doc.data();
+        const userId = doc.id;
+
+        if (userId === uid) continue; // skip yourself
+
+        // Check if already friend
+        const friendDoc = await db.collection('users').doc(uid).collection('friends').doc(userId).get();
+        if (friendDoc.exists) continue;
+
+        // Check if friend request sent by current user to this user
+        const sentReqDoc = await db.collection('users').doc(userId).collection('friendRequests').doc(uid).get();
+        if (sentReqDoc.exists) continue;
+
+        // Check if friend request received from this user
+        const receivedReqDoc = await db.collection('users').doc(uid).collection('friendRequests').doc(userId).get();
+        if (receivedReqDoc.exists) continue;
+
+        html += `
+          <div style="padding:6px; border-bottom:1px solid #ccc; cursor:pointer;" onclick="visitProfile('${userId}')">
+            <strong>${user.name}</strong> <small style="color:gray;">(Click to view profile)</small>
+          </div>
+        `;
+      }
+
+      if (html === '<h4>Search Results:</h4>') {
+        html = '<p>No users found.</p>';
+      }
+
+      searchResultsDiv.innerHTML = html;
+
+    } catch (e) {
+      searchResultsDiv.innerHTML = `<p style="color:red;">Error searching users: ${e.message}</p>`;
+    }
+  }, 300);
 }
 
 // Load incoming friend requests (pending)
