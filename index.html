@@ -171,28 +171,29 @@
   }
 
   // Register
-  function register() {
-    const name = document.getElementById('name').value.trim();
-    const age = document.getElementById('age').value.trim();
-    const bio = document.getElementById('bio').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const pass = document.getElementById('password').value.trim();
-
-    if (!email.endsWith('@xinn.lab')) {
-      alert('Email must end with @xinn.lab');
-      return;
-    }
-
-    auth.createUserWithEmailAndPassword(email, pass)
-      .then(cred => {
-        return db.collection('users').doc(cred.user.uid).set({
-          name, age, bio, email,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      })
-      .catch(e => alert(e.message));
+ function register() {
+  const name = document.getElementById('name').value.trim();
+  const age = document.getElementById('age').value.trim();
+  const bio = document.getElementById('bio').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('password').value.trim();
+  if (!email.endsWith('@xinn.lab')) {
+    alert('Email must end with @xinn.lab');
+    return;
   }
-
+  auth.createUserWithEmailAndPassword(email, pass)
+    .then(cred => {
+      return db.collection('users').doc(cred.user.uid).set({ 
+        name, 
+        age, 
+        bio, 
+        email, 
+        nameLower: name.toLowerCase(),        // add lowercase name
+        emailLower: email.toLowerCase()       // add lowercase email
+      });
+    })
+    .catch(e => alert(e.message));
+}
   // Show page main function
   function showPage(page) {
     setActiveNav(page);
@@ -313,16 +314,18 @@
   }
 
   // Save profile changes
-  function saveProfile() {
-    const name = document.getElementById('name').value.trim();
-    const age = document.getElementById('age').value.trim();
-    const bio = document.getElementById('bio').value.trim();
-    if (!name) return alert("Name cannot be empty");
-
-    db.collection('users').doc(auth.currentUser.uid).update({ name, age, bio })
-      .then(() => renderProfile())
-      .catch(e => alert(e.message));
-  }
+ function saveProfile() {
+  const name = document.getElementById('name').value.trim();
+  const age = document.getElementById('age').value.trim();
+  const bio = document.getElementById('bio').value.trim();
+  db.collection('users').doc(auth.currentUser.uid).update({ 
+    name, 
+    age, 
+    bio, 
+    nameLower: name.toLowerCase()       // update lowercase name for search
+  });
+  renderProfile();
+}
 
   // FRIENDS PAGE ------------------------------------------------
   // Render friends list + requests + search + add friend
