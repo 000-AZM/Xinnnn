@@ -3,65 +3,98 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Xinn Social — Feed/Profile Fix</title>
+<title>Xinn Social — Responsive</title>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <style>
   :root{
-    --primary:#2196F3; --bg:#f0f2f5; --card:#fff; --muted:#666;
+    --primary:#1976d2; --bg:#f0f2f5; --card:#fff; --muted:#666; --radius:10px;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:#111;display:flex;flex-direction:column;min-height:100vh}
-  header{background:var(--primary);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+  body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:#111;min-height:100vh;display:flex;flex-direction:column}
+  header{background:var(--primary);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
   header h1{margin:0;font-size:18px}
-  #app{padding:16px;max-width:900px;margin:16px auto 96px;flex:1}
-  .card{background:var(--card);padding:14px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.06);margin-bottom:12px}
-  input,textarea,button,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:8px}
+  main{flex:1;display:flex;justify-content:center;padding:16px}
+  .container{width:100%;max-width:1100px}
+  .card{background:var(--card);padding:14px;border-radius:var(--radius);box-shadow:0 2px 6px rgba(0,0,0,0.06);margin-bottom:12px}
+  input,textarea,button,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:8px;font-size:15px}
   textarea{resize:vertical}
-  button{background:var(--primary);color:#fff;border:none;cursor:pointer}
-  nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #ddd;max-width:900px;margin:0 auto}
-  nav button{background:none;border:none;color:#555;display:flex;flex-direction:column;align-items:center;font-size:14px}
+  button{background:var(--primary);color:#fff;border:none;cursor:pointer;font-weight:600}
+  nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);display:flex;justify-content:space-around;padding:8px 0;border-top:1px solid #ddd;max-width:1100px;margin:0 auto}
+  nav button{background:none;border:none;color:#555;display:flex;flex-direction:column;align-items:center;font-size:13px;padding:2px 6px}
   nav button.active{color:var(--primary);font-weight:700}
-  .avatar-circle{width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;margin-right:10px}
-  .profile-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:10px}
-  .chat-container{max-height:420px;overflow:auto;padding:10px;border-radius:8px;background:#e5ddd5}
-  .chat-message{max-width:70%;padding:8px 12px;margin:8px 0;border-radius:18px;word-break:break-word}
-  .chat-message.self{background:#dcf8c6;margin-left:auto;border-bottom-right-radius:0}
-  .chat-message.friend{background:#fff;margin-right:auto;border-bottom-left-radius:0}
+  nav button span.material-icons{font-size:24px}
+  /* grid layout for desktop */
+  .layout { display: grid; grid-template-columns: 1fr; gap:12px; }
+  @media(min-width:900px){
+    .layout { grid-template-columns: 320px 1fr 320px; align-items:start; }
+    .left, .right { position:sticky; top:88px; align-self:start; }
+  }
+  /* avatar */
+  .avatar { width:48px;height:48px;border-radius:50%;object-fit:cover;background:#ddd;display:inline-block;vertical-align:middle }
+  .avatar-sm { width:36px;height:36px;border-radius:50%;object-fit:cover;background:#ddd;display:inline-block;vertical-align:middle }
+  .initial { width:48px;height:48px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--primary);color:#fff;font-weight:700 }
   .row{display:flex;gap:12px;align-items:center}
-  .muted{color:var(--muted)}
-  @media(max-width:600px){#app{padding:12px}}
+  .muted{color:var(--muted);font-size:13px}
+  /* feed post */
+  .post-card{padding:12px;border-radius:8px;background:#fff;margin-bottom:10px}
+  /* friend item */
+  .friend-item{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:8px;background:#fff;margin-bottom:8px}
+  .request-card{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:#fff;margin-bottom:8px}
+  /* chat */
+  .chat-wrapper{display:flex;flex-direction:column;height:60vh}
+  .chat-list{overflow:auto;padding:10px;background:#e5ddd5;border-radius:8px;margin-bottom:8px;flex:1}
+  .bubble{display:inline-block;padding:10px 14px;border-radius:18px;max-width:70%;word-break:break-word;margin:8px 0}
+  .bubble.me{background:#dcf8c6;margin-left:auto;border-bottom-right-radius:0}
+  .bubble.them{background:#fff;margin-right:auto;border-bottom-left-radius:0}
+  .small{font-size:13px;color:var(--muted)}
+  /* profile avatar */
+  .profile-avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;background:#ddd;display:block;margin:0 auto 10px}
+  /* modal */
+  .modal-back{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;z-index:999}
+  .modal {background:#fff;padding:16px;border-radius:8px;width:90%;max-width:420px}
+  .center{text-align:center}
+  /* responsive adjustments */
+  @media(max-width:700px){
+    .profile-avatar{width:72px;height:72px}
+    .layout{grid-template-columns:1fr}
+    nav{padding:6px 0}
+  }
 </style>
 </head>
 <body>
 <header>
   <h1>Xinn Social</h1>
   <div style="display:flex;gap:12px;align-items:center">
-    <button id="darkToggle" style="background:none;border:none;color:#fff;cursor:pointer">🌙</button>
+    <button id="darkBtn" title="Toggle dark" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer">🌙</button>
   </div>
 </header>
 
-<div id="app"></div>
+<main>
+  <div class="container">
+    <div id="app"></div>
+  </div>
+</main>
 
 <nav id="navBar" style="display:none">
-  <button id="navFeed" onclick="go('feed')"><span class="material-icons">home</span>Feed</button>
-  <button id="navFriends" onclick="go('friends')"><span class="material-icons">group</span>Friends</button>
-  <button id="navChat" onclick="go('chat')"><span class="material-icons">chat</span>Chat</button>
-  <button id="navProfile" onclick="go('profile')"><span class="material-icons">person</span>Profile</button>
-  <button id="navSettings" onclick="go('settings')"><span class="material-icons">settings</span>Settings</button>
+  <button id="btnNavFeed" onclick="navigate('feed')" title="Feed"><span class="material-icons">home</span>Feed</button>
+  <button id="btnNavFriends" onclick="navigate('friends')" title="Friends"><span class="material-icons">group</span>Friends</button>
+  <button id="btnNavChat" onclick="navigate('chat')" title="Chat"><span class="material-icons">chat</span>Chat</button>
+  <button id="btnNavProfile" onclick="navigate('profile')" title="Profile"><span class="material-icons">person</span>Profile</button>
+  <button id="btnNavSettings" onclick="navigate('settings')" title="Settings"><span class="material-icons">settings</span>Settings</button>
 </nav>
 
 <!-- Edit profile modal -->
-<div id="editProfileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:999">
-  <div style="background:#fff;padding:16px;border-radius:8px;max-width:420px;width:90%">
-    <h3>Edit profile</h3>
+<div id="editModal" class="modal-back" aria-hidden="true">
+  <div class="modal">
+    <h3>Edit Profile</h3>
     <input id="editName" placeholder="Full name" />
     <input id="editAge" placeholder="Age" />
     <textarea id="editBio" rows="3" placeholder="Bio"></textarea>
     <label>Avatar (optional)</label>
     <input id="editAvatar" type="file" accept="image/*" />
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
       <button onclick="closeEdit()">Cancel</button>
-      <button onclick="saveProfile()">Save</button>
+      <button onclick="saveEdit()">Save</button>
     </div>
   </div>
 </div>
@@ -71,7 +104,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
 <script>
-/* ---------- CONFIG - replace with your config if needed ---------- */
+/* ---------- FIREBASE CONFIG - update if needed ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyDhVRhDDCM8vFbNe9f1Ag4Xn0901igl4s0",
   authDomain: "xinn-social.firebaseapp.com",
@@ -85,574 +118,497 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ---------- Utilities ---------- */
+/* ---------- helpers ---------- */
 function $(id){ return document.getElementById(id); }
-function safeSet(id, html){
-  const el = $(id); if(!el) return; el.innerHTML = html;
-}
+function safeSet(id, html){ const el = $(id); if(el) el.innerHTML = html; }
 function escapeHTML(s){ if(!s) return ''; return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function debounce(fn, t){ let to; return (...a)=>{ clearTimeout(to); to=setTimeout(()=>fn(...a), t); }; }
 
-/* ---------- State ---------- */
+/* ---------- app state ---------- */
 let me = null;
-let meData = null; // user doc
+let meDoc = null; // latest user doc
 let currentView = 'feed';
-let currentProfileUid = null; // when viewing a profile (own or other)
-let avatarBase64 = null;      // used in edit modal
+let currentProfileUid = null;
+let postListeners = { feed: null, profile: null };
+let chatUnsub = null;
+let editingAvatarBase64 = null;
 
-/* ---------- Auth handling ---------- */
+/* ---------- auth state ---------- */
 auth.onAuthStateChanged(async user => {
   me = user;
-  if(me){
+  if(user){
     // ensure user doc exists
-    const ref = db.collection('users').doc(me.uid);
-    const doc = await ref.get();
-    if(!doc.exists){
-      await ref.set({
-        name: me.email.split('@')[0],
+    const uref = db.collection('users').doc(user.uid);
+    const udoc = await uref.get();
+    if(!udoc.exists){
+      await uref.set({
+        name: user.email ? user.email.split('@')[0] : 'User',
         age: '',
         bio: '',
-        email: me.email,
+        email: user.email || '',
         friends: [],
         friendRequests: [],
         sentRequests: [],
         avatar: null
       });
     }
-    meData = (await ref.get()).data();
+    meDoc = (await uref.get()).data();
     $('navBar').style.display = 'flex';
-    go('feed');
+    navigate('feed');
   } else {
-    meData = null;
+    meDoc = null;
     $('navBar').style.display = 'none';
     renderLogin();
   }
 });
 
-/* ---------- Navigation ---------- */
-function setActiveNav(page){
-  currentView = page;
-  ['navFeed','navFriends','navChat','navProfile','navSettings'].forEach(id => {
-    const btn = $(id);
-    if(!btn) return;
-    btn.classList.toggle('active', id.toLowerCase() === ('nav'+page).toLowerCase());
+/* ---------- navigation ---------- */
+function setActiveNav(id){
+  ['btnNavFeed','btnNavFriends','btnNavChat','btnNavProfile','btnNavSettings'].forEach(b=>{
+    const el = $(b); if(!el) return;
+    el.classList.toggle('active', b === id);
   });
 }
-function go(page){
-  setActiveNav(page);
-  if(page==='feed') renderFeed();
-  if(page==='friends') renderFriends();
-  if(page==='chat') renderChat();
-  if(page==='profile') { currentProfileUid = me.uid; renderProfile(me.uid); }
-  if(page==='settings') renderSettings();
+function navigate(view){
+  currentView = view;
+  setActiveNav('btnNav' + view.charAt(0).toUpperCase() + view.slice(1));
+  // detach profile listener if switching away
+  if(view !== 'profile' && postListeners.profile){ postListeners.profile(); postListeners.profile = null; }
+  if(view !== 'feed' && postListeners.feed){ /* keep feed subscribed for real-time if desired */ }
+  if(chatUnsub && view !== 'chat'){ chatUnsub(); chatUnsub = null; }
+  if(view === 'feed') renderFeed();
+  if(view === 'friends') renderFriends();
+  if(view === 'chat') renderChat();
+  if(view === 'profile') renderProfile(me.uid);
+  if(view === 'settings') renderSettings();
 }
 
-/* ---------- AUTH UI ---------- */
+/* ---------- LOGIN / REGISTER ---------- */
 function renderLogin(){
-  setActiveNav(null);
-  document.getElementById('app').innerHTML = `
-    <div class="card" style="max-width:420px;margin:40px auto">
-      <h3>Login</h3>
-      <input id="loginEmail" placeholder="Email (@xinn.lab only)" />
-      <input id="loginPass" type="password" placeholder="Password" />
-      <button id="btnLogin">Login</button>
-      <p style="margin-top:8px">Or <a href="#" id="toRegister">Register</a></p>
-    </div>`;
+  safeSet('app', `<div class="card" style="max-width:420px;margin:40px auto">
+    <h3>Login</h3>
+    <input id="loginEmail" placeholder="Email (@xinn.lab)" />
+    <input id="loginPass" type="password" placeholder="Password" />
+    <button id="btnLogin">Login</button>
+    <p style="margin-top:8px">Or <a href="#" id="toRegister">Register</a></p>
+  </div>`);
   $('btnLogin').onclick = async ()=> {
-    const email = $('loginEmail').value.trim();
-    const pass = $('loginPass').value;
-    if(!email.endsWith('@xinn.lab')) return alert('Email must end with @xinn.lab');
+    const email = $('loginEmail').value.trim(), pass = $('loginPass').value;
+    if(!email.endsWith('@xinn.lab')) return alert('Use an @xinn.lab email');
     try{ await auth.signInWithEmailAndPassword(email, pass); } catch(e){ alert(e.message); }
   };
   $('toRegister').onclick = (e)=>{ e.preventDefault(); renderRegister(); };
 }
 
 function renderRegister(){
-  document.getElementById('app').innerHTML = `
-    <div class="card" style="max-width:420px;margin:40px auto">
-      <h3>Register</h3>
-      <input id="regName" placeholder="Full name" />
-      <input id="regAge" placeholder="Age" />
-      <textarea id="regBio" placeholder="Bio" rows="3"></textarea>
-      <input id="regEmail" placeholder="Email (@xinn.lab only)" />
-      <input id="regPass" type="password" placeholder="Password" />
-      <button id="btnRegister">Create account</button>
-      <p style="margin-top:8px">Have an account? <a href="#" id="toLogin">Login</a></p>
-    </div>`;
-  $('btnRegister').onclick = async ()=>{
-    const name = $('regName').value.trim();
-    const age = $('regAge').value.trim();
-    const bio = $('regBio').value.trim();
-    const email = $('regEmail').value.trim();
-    const pass = $('regPass').value;
-    if(!email.endsWith('@xinn.lab')) return alert('Email must end with @xinn.lab');
-    if(!name || !age) return alert('Fill required fields');
+  safeSet('app', `<div class="card" style="max-width:420px;margin:40px auto">
+    <h3>Register</h3>
+    <input id="regName" placeholder="Full name" />
+    <input id="regAge" placeholder="Age" />
+    <textarea id="regBio" rows="3" placeholder="Bio"></textarea>
+    <input id="regEmail" placeholder="Email (@xinn.lab)" />
+    <input id="regPass" type="password" placeholder="Password" />
+    <button id="btnRegister">Create Account</button>
+    <p style="margin-top:8px">Already have an account? <a href="#" id="toLogin">Login</a></p>
+  </div>`);
+  $('btnRegister').onclick = async ()=> {
+    const name = $('regName').value.trim(), age = $('regAge').value.trim(), bio = $('regBio').value.trim();
+    const email = $('regEmail').value.trim(), pass = $('regPass').value;
+    if(!email.endsWith('@xinn.lab')) return alert('Use an @xinn.lab email');
+    if(!name) return alert('Enter a name');
     try{
       const cred = await auth.createUserWithEmailAndPassword(email, pass);
-      // Create user doc and auto-login (auth state will change)
       await db.collection('users').doc(cred.user.uid).set({
-        name, age, bio, email,
-        friends: [], friendRequests: [], sentRequests: [], avatar: null
+        name, age, bio, email, friends:[], friendRequests:[], sentRequests:[], avatar: null
       });
-      // No need to call signIn — auth state already set (auto login)
+      // auto-login: auth state change will handle
     } catch(e){ alert(e.message); }
   };
   $('toLogin').onclick = (e)=>{ e.preventDefault(); renderLogin(); };
 }
 
 /* ---------- FEED ---------- */
-/* Feed shows only public posts (visibility: 'public') */
+/* Feed shows all posts (real-time) */
 function renderFeed(){
   safeSet('app', `
-    <div>
-      <div class="card" style="max-width:720px;margin:0 auto;">
-        <h3>What's on your mind?</h3>
-        <textarea id="feedPostContent" rows="3" placeholder="Share something with everyone (public)"></textarea>
-        <button id="btnFeedPost">Post to feed (public)</button>
+    <div class="layout">
+      <div class="left"></div>
+      <div>
+        <div class="card">
+          <h3>Create post</h3>
+          <textarea id="feedText" rows="3" placeholder="Share something..."></textarea>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="feedImage" type="file" accept="image/*" style="flex:1" />
+            <button id="btnPost">Post</button>
+          </div>
+        </div>
+        <div id="feedArea"></div>
       </div>
-      <div id="feedPosts" style="max-width:720px;margin:12px auto"></div>
+      <div class="right"></div>
     </div>
   `);
-  const btn = $('btnFeedPost'); if(btn) btn.onclick = createPostFeed;
-  loadFeedPosts();
+  $('btnPost').onclick = postToFeed;
+  // start real-time feed listener
+  subscribeFeed();
 }
 
-async function createPostFeed(){
-  const content = $('feedPostContent') ? $('feedPostContent').value.trim() : '';
-  if(!content) return alert('Post cannot be empty');
+let feedUnsub = null;
+function subscribeFeed(){
+  if(feedUnsub) return;
+  feedUnsub = db.collection('posts').orderBy('timestamp','desc').onSnapshot(async snap=>{
+    const area = $('feedArea'); if(!area) return;
+    if(snap.empty){ safeSet('feedArea','<div class="card">No posts yet.</div>'); return; }
+    let html = '';
+    for(const doc of snap.docs){
+      const p = doc.data();
+      const uid = p.uid;
+      const udoc = await db.collection('users').doc(uid).get();
+      const u = udoc.exists ? udoc.data() : { name:'Unknown', avatar:null };
+      const time = p.timestamp ? p.timestamp.toDate().toLocaleString() : 'Just now';
+      html += `<div class="post-card card">
+        <div class="row" style="align-items:flex-start">
+          ${u.avatar ? `<img src="${u.avatar}" class="avatar" />` : `<div class="initial">${escapeHTML(u.name ? u.name[0] : '?')}</div>`}
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between">
+              <div><strong>${escapeHTML(u.name)}</strong><div class="muted">${time}</div></div>
+            </div>
+            <div style="margin-top:8px">${escapeHTML(p.content)}</div>
+            ${p.image ? `<div style="margin-top:8px"><img src="${p.image}" style="max-width:100%;border-radius:8px" /></div>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }
+    safeSet('feedArea', html);
+  }, err=> { console.error(err); safeSet('feedArea','<div class="card">Error loading feed</div>'); });
+}
+
+async function postToFeed(){
+  const content = $('feedText').value.trim();
+  const file = $('feedImage').files && $('feedImage').files[0];
+  if(!content && !file) return alert('Post text or image required');
   try{
+    let imageBase = null;
+    if(file){
+      imageBase = await fileToBase64(file);
+    }
     await db.collection('posts').add({
-      content,
       uid: me.uid,
-      visibility: 'public', // important: public -> appears in feed
+      content,
+      image: imageBase || null,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
-    if($('feedPostContent')) $('feedPostContent').value = '';
+    if($('feedText')) $('feedText').value = '';
+    if($('feedImage')) $('feedImage').value = '';
   } catch(e){ alert('Error posting: '+e.message); }
 }
 
-function loadFeedPosts(){
-  const container = 'feedPosts';
-  safeSet(container, '<p>Loading feed...</p>');
-  // Only public posts
-  db.collection('posts').where('visibility','==','public').orderBy('timestamp','desc')
-    .onSnapshot(async snap=>{
-      if(!$(container)) return; // guard
-      if(snap.empty) { safeSet(container, '<p>No public posts yet.</p>'); return; }
-      let html = '';
-      // gather user docs to reduce calls
-      const posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      for(const p of posts){
-        let user = { name: 'Unknown', avatar: null };
-        try {
-          const ud = await db.collection('users').doc(p.uid).get();
-          if(ud.exists) user = ud.data();
-        } catch {}
-        const t = p.timestamp ? p.timestamp.toDate().toLocaleString() : 'Just now';
-        html += `<div class="card" style="padding:12px;">
-          <div class="row" style="align-items:center;cursor:pointer" onclick="renderProfile('${p.uid}')">
-            ${user.avatar ? `<img src="${user.avatar}" class="profile-avatar" style="width:40px;height:40px;margin-right:10px" />`
-                         : `<div class="avatar-circle">${user.name ? user.name[0].toUpperCase() : '?'}</div>`}
-            <div>
-              <div style="font-weight:700">${escapeHTML(user.name)}</div>
-              <div class="muted" style="font-size:12px">${t}</div>
-            </div>
-          </div>
-          <div style="margin-top:10px">${escapeHTML(p.content)}</div>
-        </div>`;
-      }
-      safeSet(container, html);
-    });
-}
-
-/* ---------- PROFILE (timeline posts separate) ---------- */
-/* Profile timeline: show posts WHERE uid == profileUid (all posts by user),
-   so posts created with visibility:'profile' won't show in public feed. */
-
+/* ---------- PROFILE (user timeline) ---------- */
 async function renderProfile(uid){
-  // if uid omitted, show current user's profile
   if(!uid) uid = me.uid;
   currentProfileUid = uid;
-  const doc = await db.collection('users').doc(uid).get();
-  if(!doc.exists) {
-    safeSet('app','<div class="card">User not found</div>');
-    return;
-  }
-  const user = doc.data();
-  const isMe = (uid === me.uid);
-  // header
-  safeSet('app', `<div style="max-width:720px;margin:0 auto;">
-    <div class="card" style="text-align:center;">
-      ${user.avatar ? `<img src="${user.avatar}" class="profile-avatar" />` : `<div class="avatar-circle" style="width:80px;height:80px;font-size:32px">${user.name ? user.name[0].toUpperCase() : '?'}</div>`}
-      <h3>${escapeHTML(user.name)}</h3>
-      <p><strong>Age:</strong> ${escapeHTML(user.age||'')}</p>
-      <p><strong>Bio:</strong> ${escapeHTML(user.bio||'')}</p>
-      ${isMe ? `<button id="btnOpenEdit">Edit Profile</button>` : ''}
+  const udoc = await db.collection('users').doc(uid).get();
+  if(!udoc.exists) { safeSet('app','<div class="card">User not found</div>'); return; }
+  const u = udoc.data();
+  const isMe = uid === me.uid;
+  safeSet('app', `<div class="layout">
+    <div class="left card">
+      <div class="center">
+        ${u.avatar ? `<img src="${u.avatar}" class="profile-avatar" />` : `<div class="initial" style="width:96px;height:96px;font-size:36px">${escapeHTML(u.name?u.name[0]:'?')}</div>`}
+        <h3>${escapeHTML(u.name)}</h3>
+        <p class="muted">Age: ${escapeHTML(u.age||'')}</p>
+        <p>${escapeHTML(u.bio||'')}</p>
+        ${isMe ? `<button id="btnEditProfile">Edit profile</button>` : ''}
+      </div>
     </div>
-    <div id="profilePostArea"></div>
-    <div id="profilePosts" style="margin-top:12px"></div>
+    <div>
+      ${isMe ? `<div class="card"><h4>Post on your timeline</h4>
+        <textarea id="profileText" rows="3" placeholder="Share on your timeline..."></textarea>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="profileImage" type="file" accept="image/*" style="flex:1" />
+          <button id="btnProfilePost">Post</button>
+        </div>
+      </div>` : ''}
+      <div id="profilePosts"></div>
+    </div>
+    <div class="right card">
+      <h4>Friends</h4>
+      <div id="profileFriends"></div>
+    </div>
   </div>`);
-  if(isMe){
-    const btn = $('btnOpenEdit'); if(btn) btn.onclick = openEditModal;
-    // show interface to post on own profile (visibility: 'profile' so it won't show in feed)
-    safeSet('profilePostArea', `<div class="card" style="max-width:720px;margin:12px auto">
-      <h4>Post on your timeline</h4>
-      <textarea id="profilePostContent" rows="3" placeholder="Share something on your timeline (only on your profile)"></textarea>
-      <button id="btnProfilePost">Post to profile</button>
-    </div>`);
-    const btnPost = $('btnProfilePost'); if(btnPost) btnPost.onclick = createPostProfile;
-  } else {
-    safeSet('profilePostArea',''); // nothing for other user's profile
-  }
-  loadProfilePosts(uid);
+  if(isMe){ $('btnEditProfile').onclick = openEditModal; $('btnProfilePost').onclick = postOnProfile; }
+  subscribeProfilePosts(uid);
+  loadProfileFriends(uid);
 }
 
-async function createPostProfile(){
-  const contentEl = $('profilePostContent');
-  if(!contentEl) return;
-  const content = contentEl.value.trim();
-  if(!content) return alert('Post cannot be empty');
-  try{
-    await db.collection('posts').add({
-      content,
-      uid: me.uid,
-      visibility: 'profile', // important: profile-only posts don't go to public feed
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    contentEl.value = '';
-    // refresh profile posts
-    loadProfilePosts(me.uid);
-  } catch(e){ alert('Error posting: ' + e.message); }
-}
-
-function loadProfilePosts(uid){
-  safeSet('profilePosts','<p>Loading posts...</p>');
-  // Query posts where uid == profile uid. Could be visibility profile OR public OR any -> we show all posts by that user
-  db.collection('posts').where('uid','==',uid).orderBy('timestamp','desc').onSnapshot(snap=>{
-    if(!$('profilePosts')) return;
-    if(snap.empty){ safeSet('profilePosts','<p>No posts on this profile yet.</p>'); return; }
+let profileUnsub = null;
+function subscribeProfilePosts(uid){
+  if(profileUnsub) profileUnsub(); profileUnsub = null;
+  profileUnsub = db.collection('posts').where('uid','==',uid).orderBy('timestamp','desc').onSnapshot(snap=>{
+    const area = $('profilePosts'); if(!area) return;
+    if(snap.empty){ safeSet('profilePosts','<div class="card">No posts yet.</div>'); return; }
     let html = '';
-    snap.forEach(doc => {
+    snap.forEach(doc=>{
       const p = doc.data();
       const t = p.timestamp ? p.timestamp.toDate().toLocaleString() : 'Just now';
-      html += `<div class="card" style="padding:10px;margin-bottom:8px;">
-        <small class="muted">${t}</small>
-        <div style="margin-top:8px">${escapeHTML(p.content)}</div>
-      </div>`;
+      html += `<div class="post-card card"><div class="muted" style="font-size:12px">${t}</div><div style="margin-top:8px">${escapeHTML(p.content)}</div>${p.image?`<div style="margin-top:8px"><img src="${p.image}" style="max-width:100%;border-radius:8px" /></div>`:''}</div>`;
     });
     safeSet('profilePosts', html);
-  });
+  }, e=>{ console.error(e); safeSet('profilePosts','<div class="card">Error loading posts</div>'); });
+}
+
+async function postOnProfile(){
+  const content = $('profileText').value.trim();
+  const file = $('profileImage').files && $('profileImage').files[0];
+  if(!content && !file) return alert('Post text or image required');
+  try{
+    let imageBase = null;
+    if(file) imageBase = await fileToBase64(file);
+    await db.collection('posts').add({
+      uid: me.uid,
+      content,
+      image: imageBase || null,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    if($('profileText')) $('profileText').value = '';
+    if($('profileImage')) $('profileImage').value = '';
+  } catch(e){ alert('Error posting: '+e.message); }
+}
+
+async function loadProfileFriends(uid){
+  const el = $('profileFriends'); if(!el) return;
+  try{
+    const doc = await db.collection('users').doc(uid).get(); if(!doc.exists) return;
+    const data = doc.data();
+    const friends = data.friends || [];
+    if(!friends.length){ el.innerHTML = '<p class="muted">No friends yet</p>'; return; }
+    let html = '';
+    for(const fid of friends){
+      const fdoc = await db.collection('users').doc(fid).get(); if(!fdoc.exists) continue;
+      const f = fdoc.data();
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><div class="avatar-sm">${f.name?f.name[0].toUpperCase():'?'}</div><div>${escapeHTML(f.name)}</div></div>`;
+    }
+    el.innerHTML = html;
+  } catch(e){ el.innerHTML = '<p class="muted">Error loading friends</p>'; console.error(e); }
 }
 
 /* ---------- FRIENDS ---------- */
-
 async function renderFriends(){
-  safeSet('app', `<div style="max-width:720px;margin:0 auto;">
-    <div class="card">
-      <h3>Find people</h3>
-      <input id="friendSearch" placeholder="Search name or email..." />
-      <div id="friendSearchResults"></div>
+  safeSet('app', `<div class="layout">
+    <div class="left card"><h4>Your profile</h4><div id="friendsProfileSummary"></div></div>
+    <div>
+      <div class="card"><h3>Find people</h3><input id="friendSearch" placeholder="Search name or email" /><div id="friendResults"></div></div>
+      <div class="card"><h3>Requests</h3><div id="incomingRequests"></div></div>
+      <div class="card"><h3>Your friends</h3><div id="yourFriends"></div></div>
     </div>
-    <div class="card">
-      <h3>Pending requests</h3>
-      <div id="pendingRequests"></div>
-    </div>
-    <div class="card">
-      <h3>Your friends</h3>
-      <div id="friendList"></div>
-    </div>
+    <div class="right card"><h4>Tips</h4><p class="muted">Search by name or email.</p></div>
   </div>`);
-  const search = $('friendSearch'); if(search) search.addEventListener('input', debounce(()=>searchUsers(search.value.trim()),300));
-  await loadFriendPanels();
+  $('friendSearch').addEventListener('input', debounce(()=>searchPeople($('friendSearch').value.trim()), 300));
+  await refreshFriendsPanel();
 }
 
-function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
-
-async function loadFriendPanels(){
-  // refresh meData
-  const meRef = db.collection('users').doc(me.uid);
-  const meDoc = await meRef.get(); if(!meDoc.exists) return;
-  meData = meDoc.data();
-
-  // pending requests (received)
-  const pending = meData.friendRequests || [];
-  if(!$('pendingRequests')) return;
-  if(pending.length===0) safeSet('pendingRequests','<p>No pending requests</p>');
-  else {
-    let html = '';
-    for(const fid of pending){
-      const d = await db.collection('users').doc(fid).get();
-      if(!d.exists) continue;
-      const u = d.data();
-      html += `<div class="request-card">
-        <div><div class="avatar-circle">${u.name?u.name[0].toUpperCase():'?'}</div>${escapeHTML(u.name)}</div>
-        <div>
-          <button onclick="acceptFriend('${fid}')">Accept</button>
-          <button onclick="declineFriend('${fid}')">Decline</button>
-        </div>
-      </div>`;
-    }
-    safeSet('pendingRequests', html);
-  }
-
-  // friends
-  const friends = meData.friends || [];
-  if(!$('friendList')) return;
-  if(friends.length===0) safeSet('friendList','<p>No friends yet</p>');
-  else {
-    let html = '';
-    for(const fid of friends){
-      const d = await db.collection('users').doc(fid).get();
-      if(!d.exists) continue;
-      const u = d.data();
-      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;">
-        <div style="display:flex;align-items:center;cursor:pointer" onclick="renderProfile('${fid}')">
-          <div class="avatar-circle">${u.name?u.name[0].toUpperCase():'?'}</div>
-          <div>${escapeHTML(u.name)}</div>
-        </div>
-        <div><button onclick="unfriend('${fid}')">Unfriend</button></div>
-      </div>`;
-    }
-    safeSet('friendList', html);
-  }
-}
-
-async function searchUsers(q){
-  const out = 'friendSearchResults';
-  safeSet(out, '<p>Searching...</p>');
-  if(!q){ safeSet(out,''); return; }
+async function refreshFriendsPanel(){
   try{
-    // simple client-side search (small user base); filter out self/friends/pending
+    const mex = await db.collection('users').doc(me.uid).get(); if(!mex.exists) return;
+    meDoc = mex.data();
+    // incoming
+    const reqs = meDoc.friendRequests || [];
+    if(!reqs.length) safeSet('incomingRequests','<p class="muted">No requests</p>');
+    else {
+      let html = '';
+      for(const id of reqs){
+        const d = await db.collection('users').doc(id).get(); if(!d.exists) continue;
+        const u = d.data();
+        html += `<div class="request-card"><div class="row"><div class="avatar-sm">${u.name?u.name[0].toUpperCase():'?'}</div><div>${escapeHTML(u.name)}</div></div>
+          <div><button onclick="acceptFriend('${id}')">Accept</button><button style="background:#f44336;margin-left:6px" onclick="declineFriend('${id}')">Decline</button></div></div>`;
+      }
+      safeSet('incomingRequests', html);
+    }
+    // your friends
+    const f = meDoc.friends || [];
+    if(!f.length) safeSet('yourFriends','<p class="muted">No friends yet</p>');
+    else {
+      let html=''; for(const id of f){ const d=await db.collection('users').doc(id).get(); if(!d.exists) continue; const u=d.data(); html += `<div class="friend-item"><div class="row"><div class="avatar-sm">${u.name?u.name[0].toUpperCase():'?'}</div><div>${escapeHTML(u.name)}</div></div><div><button onclick="renderProfile('${id}')">View</button></div></div>`; } safeSet('yourFriends',html);
+    }
+    // profile summary
+    safeSet('friendsProfileSummary', `<div class="row"><div class="avatar">${meDoc.avatar?`<img src="${meDoc.avatar}" style="width:48px;height:48px;border-radius:50%;object-fit:cover">`:`<div class="initial">${escapeHTML(meDoc.name?meDoc.name[0]:'?')}</div>`}</div><div><strong>${escapeHTML(meDoc.name)}</strong><div class="muted">${escapeHTML(meDoc.email||'')}</div></div></div>`);
+  } catch(e){ console.error(e); }
+}
+
+async function searchPeople(q){
+  if(!q) { safeSet('friendResults',''); return; }
+  try{
     const snap = await db.collection('users').get();
     const results = [];
     snap.forEach(d=>{
-      if(d.id === me.uid) return;
-      const u = d.data();
-      if((meData.friends||[]).includes(d.id)) return;
-      if((meData.sentRequests||[]).includes(d.id)) return;
-      if((meData.friendRequests||[]).includes(d.id)) return;
-      if((u.name||'').toLowerCase().includes(q.toLowerCase()) || (u.email||'').toLowerCase().includes(q.toLowerCase())){
-        results.push({ id:d.id, ...u });
-      }
+      const u = d.data(); if(d.id === me.uid) return;
+      if((u.name||'').toLowerCase().includes(q.toLowerCase()) || (u.email||'').toLowerCase().includes(q.toLowerCase())) results.push({id:d.id,...u});
     });
-    if(results.length === 0) { safeSet(out,'<p>No users found</p>'); return; }
-    let html = '';
-    for(const r of results){
-      html += `<div class="request-card">
-        <div><div class="avatar-circle">${r.name?r.name[0].toUpperCase():'?'}</div>${escapeHTML(r.name)}</div>
-        <div><button onclick="sendFriendRequest('${r.id}')">Send Request</button></div>
-      </div>`;
-    }
-    safeSet(out, html);
-  } catch(e){ safeSet(out, '<p>Error searching users</p>'); console.error(e); }
+    if(!results.length) { safeSet('friendResults','<p class="muted">No results</p>'); return; }
+    let html=''; for(const r of results){
+      // exclude if already friend or requested
+      const blocked = (meDoc.friends||[]).includes(r.id) || (meDoc.sentRequests||[]).includes(r.id) || (meDoc.friendRequests||[]).includes(r.id);
+      html += `<div class="request-card"><div class="row"><div class="avatar-sm">${r.name?r.name[0].toUpperCase():'?'}</div><div>${escapeHTML(r.name)}</div></div><div>${blocked?'<span class="muted">Already connected</span>':`<button onclick="sendRequest('${r.id}')">Add</button>`}</div></div>`;
+    } safeSet('friendResults', html);
+  } catch(e){ console.error(e); safeSet('friendResults','<p class="muted">Error</p>'); }
 }
 
-async function sendFriendRequest(targetUid){
-  if(!targetUid) return;
-  if(targetUid === me.uid) return alert("Can't friend yourself");
+async function sendRequest(uidTarget){
   try{
-    // update both docs
-    await db.collection('users').doc(me.uid).update({ sentRequests: firebase.firestore.FieldValue.arrayUnion(targetUid) });
-    await db.collection('users').doc(targetUid).update({ friendRequests: firebase.firestore.FieldValue.arrayUnion(me.uid) });
-    alert('Friend request sent');
-    await loadFriendPanels();
+    await db.collection('users').doc(me.uid).update({ sentRequests: firebase.firestore.FieldValue.arrayUnion(uidTarget) });
+    await db.collection('users').doc(uidTarget).update({ friendRequests: firebase.firestore.FieldValue.arrayUnion(me.uid) });
+    alert('Request sent'); await refreshFriendsPanel();
   } catch(e){ alert('Error: '+e.message); }
 }
 
-async function acceptFriend(fromUid){
-  const meRef = db.collection('users').doc(me.uid);
-  const otherRef = db.collection('users').doc(fromUid);
+async function acceptFriend(uidFrom){
   try{
-    await meRef.update({
-      friendRequests: firebase.firestore.FieldValue.arrayRemove(fromUid),
-      friends: firebase.firestore.FieldValue.arrayUnion(fromUid)
-    });
-    await otherRef.update({
-      sentRequests: firebase.firestore.FieldValue.arrayRemove(me.uid),
-      friends: firebase.firestore.FieldValue.arrayUnion(me.uid)
-    });
-    alert('Friend added');
-    await loadFriendPanels();
+    await db.collection('users').doc(me.uid).update({ friendRequests: firebase.firestore.FieldValue.arrayRemove(uidFrom), friends: firebase.firestore.FieldValue.arrayUnion(uidFrom) });
+    await db.collection('users').doc(uidFrom).update({ sentRequests: firebase.firestore.FieldValue.arrayRemove(me.uid), friends: firebase.firestore.FieldValue.arrayUnion(me.uid) });
+    alert('Friend added'); await refreshFriendsPanel();
   } catch(e){ alert('Error: '+e.message); }
 }
-
-async function declineFriend(fromUid){
-  const meRef = db.collection('users').doc(me.uid);
-  const otherRef = db.collection('users').doc(fromUid);
-  try{
-    await meRef.update({ friendRequests: firebase.firestore.FieldValue.arrayRemove(fromUid) });
-    await otherRef.update({ sentRequests: firebase.firestore.FieldValue.arrayRemove(me.uid) });
-    alert('Friend request declined');
-    await loadFriendPanels();
-  } catch(e){ alert('Error: '+e.message); }
+async function declineFriend(uidFrom){
+  try{ await db.collection('users').doc(me.uid).update({ friendRequests: firebase.firestore.FieldValue.arrayRemove(uidFrom) }); await db.collection('users').doc(uidFrom).update({ sentRequests: firebase.firestore.FieldValue.arrayRemove(me.uid) }); alert('Declined'); await refreshFriendsPanel(); } catch(e){ alert(e.message);}
 }
 
-async function unfriend(friendId){
-  const meRef = db.collection('users').doc(me.uid);
-  const otherRef = db.collection('users').doc(friendId);
-  try{
-    await meRef.update({ friends: firebase.firestore.FieldValue.arrayRemove(friendId) });
-    await otherRef.update({ friends: firebase.firestore.FieldValue.arrayRemove(me.uid) });
-    alert('Unfriended');
-    await loadFriendPanels();
-  } catch(e){ alert('Error: '+e.message); }
-}
-
-/* ---------- CHAT (messenger-like UI) ---------- */
-
+/* ---------- CHAT (messenger-like) ---------- */
 async function renderChat(){
-  // refresh meData
-  const doc = await db.collection('users').doc(me.uid).get(); meData = doc.exists?doc.data():meData;
-  const friends = meData.friends || [];
-  if(!friends.length){
-    safeSet('app','<div class="card" style="max-width:720px;margin:0 auto;text-align:center">No friends to chat with yet</div>');
-    return;
-  }
-  safeSet('app', `<div style="max-width:900px;margin:0 auto;display:flex;gap:12px;flex-wrap:wrap">
-    <div style="width:260px"><div class="card"><h4>Friends</h4><div id="chatFriendList"></div></div></div>
-    <div style="flex:1;min-width:300px"><div class="card"><h4 id="chatWithName">Select a friend</h4><div id="chatMessages" class="chat-container"></div>
-      <textarea id="chatInput" rows="2" placeholder="Type a message" style="border-radius:8px"></textarea>
-      <button id="sendChatBtn">Send</button>
-    </div></div>
+  // show friend list + chat area
+  await refreshFriendsPanel(); // ensures meDoc loaded
+  safeSet('app', `<div class="layout">
+    <div class="left card"><h4>Friends</h4><div id="chatFriends"></div></div>
+    <div><div class="card chat-wrapper"><h4 id="chatHeader">Select friend</h4><div id="chatMessages" class="chat-list"></div><textarea id="chatInput" rows="2" placeholder="Type a message..."></textarea><button id="sendBtn">Send</button></div></div>
+    <div class="right card"><h4>Info</h4><p class="muted">Chats are real-time</p></div>
   </div>`);
   // populate friends
-  const listEl = $('chatFriendList'); if(!listEl) return;
-  let html = '';
-  for(const fid of friends){
-    const fdoc = await db.collection('users').doc(fid).get(); if(!fdoc.exists) continue;
-    const f = fdoc.data();
-    html += `<div style="padding:8px;border-bottom:1px solid #eee;cursor:pointer" onclick="openChat('${fid}','${escapeHTML(f.name)}')">
-      <div style="display:flex;align-items:center"><div class="avatar-circle">${f.name?f.name[0].toUpperCase():'?'}</div><div>${escapeHTML(f.name)}</div></div>
-    </div>`;
-  }
-  safeSet('chatFriendList', html);
-  const sendBtn = $('sendChatBtn'); if(sendBtn) sendBtn.onclick = sendChatMessage;
+  const html = (meDoc.friends || []).map(fid => `<div style="padding:8px;border-bottom:1px solid #eee;cursor:pointer" onclick="openChat('${fid}')">${escapeHTML((meDoc && meDoc.friends && meDoc.friends.length)?'Friend':'Friend')}</div>`).join('');
+  safeSet('chatFriends', html || '<p class="muted">No friends</p>');
+  $('sendBtn').onclick = sendChat;
 }
 
-let chatUnsub = null, chatWith = null;
-function openChat(friendUid, friendName){
-  chatWith = friendUid;
-  const messages = $('chatMessages'); if(!messages) return;
-  $('chatWithName').textContent = friendName;
-  messages.innerHTML = '<p>Loading messages...</p>';
+function openChat(friendUid){
+  // load friend details
+  db.collection('users').doc(friendUid).get().then(doc=>{
+    const friend = doc.exists ? doc.data() : { name:'Friend' };
+    $('chatHeader').textContent = friend.name;
+  });
   if(chatUnsub) chatUnsub();
   const cid = [me.uid, friendUid].sort().join('_');
-  chatUnsub = db.collection('chats').doc(cid).collection('messages').orderBy('timestamp','asc')
-    .onSnapshot(snap=>{
-      if(!messages) return;
-      if(snap.empty){ messages.innerHTML = '<p>No messages yet</p>'; return; }
-      let html = '';
-      snap.forEach(d=>{
-        const m = d.data();
-        const cls = m.uid === me.uid ? 'self' : 'friend';
-        html += `<div class="chat-message ${cls}">${escapeHTML(m.text)}</div>`;
-      });
-      messages.innerHTML = html;
-      messages.scrollTop = messages.scrollHeight;
+  const messagesDiv = $('chatMessages'); if(messagesDiv) messagesDiv.innerHTML = '<p class="muted">Loading...</p>';
+  chatUnsub = db.collection('chats').doc(cid).collection('messages').orderBy('timestamp','asc').onSnapshot(snap=>{
+    if(!messagesDiv) return;
+    if(snap.empty) { messagesDiv.innerHTML = '<p class="muted">No messages</p>'; return; }
+    let html = '';
+    snap.forEach(d=>{
+      const m = d.data();
+      const cls = m.uid === me.uid ? 'me' : 'them';
+      html += `<div class="bubble ${cls === 'me' ? 'bubble-me' : ''} ${cls==='me' ? 'bubble me' : 'bubble them'}">${escapeHTML(m.text)}</div>`;
     });
+    messagesDiv.innerHTML = html;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }, err=>console.error(err));
+  // store chatWith
+  window._chatWith = friendUid;
 }
 
-async function sendChatMessage(){
-  const txt = $('chatInput') ? $('chatInput').value.trim() : '';
-  if(!txt) return;
-  if(!chatWith) return alert('Select a friend to chat with');
-  const cid = [me.uid, chatWith].sort().join('_');
+async function sendChat(){
+  const text = $('chatInput').value.trim();
+  if(!text) return;
+  const withUid = window._chatWith;
+  if(!withUid) return alert('Select friend');
+  const cid = [me.uid, withUid].sort().join('_');
   try{
-    await db.collection('chats').doc(cid).collection('messages').add({
-      uid: me.uid,
-      text: txt,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    await db.collection('chats').doc(cid).collection('messages').add({ uid: me.uid, text, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
     if($('chatInput')) $('chatInput').value = '';
-  } catch(e){ alert('Error sending: '+e.message); }
+  } catch(e){ alert(e.message); }
 }
 
 /* ---------- SETTINGS ---------- */
-
 function renderSettings(){
   safeSet('app', `<div class="card" style="max-width:480px;margin:0 auto">
     <h3>Settings</h3>
     <button id="btnLogout" style="background:#f44336">Logout</button>
-    <hr/>
+    <hr />
     <h4>Change password</h4>
-    <input id="currentPass" type="password" placeholder="Current password" />
+    <input id="curPass" type="password" placeholder="Current password" />
     <input id="newPass" type="password" placeholder="New password" />
     <button id="btnChangePass">Change password</button>
   </div>`);
-  if($('btnLogout')) $('btnLogout').onclick = ()=>auth.signOut();
-  if($('btnChangePass')) $('btnChangePass').onclick = changePassword;
+  $('btnLogout').onclick = ()=>auth.signOut();
+  $('btnChangePass').onclick = changePassword;
 }
 
 async function changePassword(){
-  const cur = $('currentPass').value, neu = $('newPass').value;
-  if(!cur || !neu) return alert('Fill both fields');
+  const cur = $('curPass').value, neu = $('newPass').value;
+  if(!cur || !neu) return alert('Fill both');
   const user = auth.currentUser;
   const cred = firebase.auth.EmailAuthProvider.credential(user.email, cur);
   try{
     await user.reauthenticateWithCredential(cred);
     await user.updatePassword(neu);
-    alert('Password updated');
-    $('currentPass').value=''; $('newPass').value='';
+    alert('Password changed');
+    $('curPass').value=''; $('newPass').value='';
   } catch(e){ alert('Error: '+e.message); }
 }
 
-/* ---------- PROFILE EDIT modal ---------- */
+/* ---------- PROFILE EDIT ---------- */
 function openEditModal(){
-  if(!meData) return;
-  $('editName').value = meData.name || '';
-  $('editAge').value = meData.age || '';
-  $('editBio').value = meData.bio || '';
-  avatarBase64 = meData.avatar || null;
-  $('editProfileModal').style.display = 'flex';
+  if(!meDoc) return;
+  $('editName').value = meDoc.name || '';
+  $('editAge').value = meDoc.age || '';
+  $('editBio').value = meDoc.bio || '';
+  editingAvatarBase64 = meDoc.avatar || null;
+  $('editModal').style.display = 'flex';
 }
-function closeEdit(){ $('editProfileModal').style.display = 'none'; }
+function closeEdit(){ $('editModal').style.display = 'none'; }
 
-$('editAvatar')?.addEventListener('change', function(e){
-  const f = e.target.files[0];
-  if(!f) return;
-  // resize small client-side optionally, but for simplicity convert to base64 directly
-  const r = new FileReader();
-  r.onload = evt => avatarBase64 = evt.target.result;
-  r.readAsDataURL(f);
+$('editAvatar').addEventListener('change', function(e){
+  const f = e.target.files[0]; if(!f) return;
+  fileToBase64(f).then(b=> editingAvatarBase64 = b).catch(()=>alert('Image error'));
 });
 
-async function saveProfile(){
+async function saveEdit(){
   const name = $('editName').value.trim();
   const age = $('editAge').value.trim();
   const bio = $('editBio').value.trim();
-  if(!name) return alert('Name cannot be empty');
+  if(!name) return alert('Name required');
   try{
-    await db.collection('users').doc(me.uid).update({
-      name, age, bio, avatar: avatarBase64 || null
-    });
-    meData = (await db.collection('users').doc(me.uid).get()).data();
-    alert('Profile updated');
+    await db.collection('users').doc(me.uid).update({ name, age, bio, avatar: editingAvatarBase64 || null });
+    meDoc = (await db.collection('users').doc(me.uid).get()).data();
     closeEdit();
     renderProfile(me.uid);
-  } catch(e){ alert('Error saving: '+e.message); }
+    alert('Profile updated');
+  } catch(e){ alert('Error: '+e.message); }
 }
 
-/* ---------- HELPERS ---------- */
-function debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; }
+/* ---------- UTIL: file->base64 ---------- */
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=> res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
 
-/* ---------- INITIAL ---------- */
-window.addEventListener('load', ()=> {
+/* ---------- initial helpers ---------- */
+window.addEventListener('load', ()=>{
   // dark toggle
-  $('darkToggle')?.addEventListener('click', ()=> document.body.classList.toggle('dark'));
+  $('darkBtn').addEventListener('click', ()=> document.body.classList.toggle('dark'));
 });
 
-// expose some functions used by inline event handlers
+/* exposed for inline events in templates */
+window.navigate = navigate;
 window.renderProfile = renderProfile;
-window.go = go;
-window.sendFriendRequest = sendFriendRequest;
+window.sendRequest = sendRequest;
 window.acceptFriend = acceptFriend;
 window.declineFriend = declineFriend;
-window.unfriend = unfriend;
 window.openChat = openChat;
-window.renderLogin = renderLogin;
-window.renderRegister = renderRegister;
 window.openEditModal = openEditModal;
 
-/* ---------- END ---------- */
+/* ---------- start (if logged out) ---------- */
+// if not logged in, show login handled by auth state listener
+
 </script>
 </body>
 </html>
